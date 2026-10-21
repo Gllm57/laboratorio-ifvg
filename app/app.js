@@ -71,7 +71,7 @@
     m.appendChild(H(`<section class="hero">
       <div class="hero-txt">
         <p class="eyebrow">Basado en el Esses Bootcamp · Fede Esses</p>
-        <h1>Una estrategia.<br>Tres modelos.<br>Cero improvisación.</h1>
+        <h1>Una estrategia. Tres modelos. Cero improvisación.</h1>
         <p class="lead">Aprende los 50 días del bootcamp, entrena el ojo con prácticas evaluadas y opera sesiones simuladas de NY AM con la estrategia de toma de liquidez + IFVG + objetivo claro.</p>
         <div class="row"><a class="btn pri" href="#dia${nextDay}">${done ? 'Continuar' : 'Empezar'}: Día ${nextDay}</a><a class="btn" href="#simulador">Abrir simulador</a></div>
       </div>
@@ -368,6 +368,7 @@
       <div class="sim-top">
         <div class="htf"><div class="htf-head"><p class="dg-tag">Contexto</p><div id="htf-tf"></div></div><div id="htf"></div><p class="small muted" id="htf-t"></p></div>
         <div class="sim-stats" id="sim-stats"></div>
+        <div class="live" id="live" aria-live="polite"></div>
       </div>
       <div class="sim-tfrow"><span class="dg-tag">Gráfico NQ</span><div id="sim-tf"></div><span class="small muted">Las órdenes se ejecutan al cierre del minuto actual en cualquier temporalidad.</span></div>
       <div class="dg-chart sim-chart" id="sim-chart"></div>
@@ -407,8 +408,16 @@
       // FVG calculados en la temporalidad visible (solo velas cerradas); se guardan en minutos para el mapeo
       const tf = SIM.tf, A = E.agg(C, tf, t), closed = Math.floor((t + 1) / tf);
       const live = E.fvgs(A, closed).filter((f) => f.formed < closed && f.i >= closed - Math.ceil(40 / tf) && f.top - f.bot >= Ss.vol * 0.2 * Math.sqrt(tf));
-      const inv = new Set(E.ifvgs(A, closed).map((x) => x.fvg.i + ':' + x.fvg.dir));
-      for (const f of live) {
+      const invT = new Map(E.ifvgs(A, closed).map((x) => [x.fvg.i + ':' + x.fvg.dir, x.t]));
+      // Solo zonas vigentes: FVG sin rellenar o IFVG reciente; como máximo las 4 últimas
+      const shown = live.filter((f) => {
+        const it = invT.get(f.i + ':' + f.dir);
+        if (it != null) return it >= closed - Math.ceil(10 / tf);
+        for (let m = f.formed + 1; m < closed; m++) if (f.dir > 0 ? A[m].l <= f.bot : A[m].h >= f.top) return false;
+        return true;
+      }).slice(-4);
+      const inv = new Set(invT.keys());
+      for (const f of shown) {
         const isInv = inv.has(f.i + ':' + f.dir);
         ann.push({ k: 'box', i0: (f.i - 1) * tf, i1: Math.min(t + 3 * tf, E.BARS), p0: f.bot, p1: f.top, c: isInv ? 'info' : f.dir > 0 ? 'bull' : 'bear', op: isInv ? 0.15 : 0.2, noScale: true });
       }
@@ -437,7 +446,36 @@
     let pnl = '';
     if (op) { const pts = (b.c - op.entry) * op.dir; pnl = `<div><span>Posición</span><b class="${pts >= 0 ? 'pos' : 'neg'}">${op.dir > 0 ? 'Long' : 'Short'} ${op.qty} ${SIM.inst} · ${pts >= 0 ? '+' : ''}${(pts / Math.abs(op.entry - op.sl)).toFixed(2)} R</b></div>`; }
     const inWin = t >= E.OPEN && t < E.WIN_END;
+    simLive();
     $('#sim-stats').innerHTML = `<div><span>Hora</span><b class="mono">${E.hhmm(t)}</b></div><div><span>Precio</span><b class="mono">${fmt(b.c)}</b></div><div><span>Ventana</span><b class="${inWin ? 'pos' : ''}">${t < E.OPEN ? 'Pre-market' : inWin ? 'Abierta' : 'Cerrada'}</b></div><div><span>Trades</span><b>${SIM.trades.length}</b></div>${pnl}`;
+  }
+  // Checklist en vivo: qué pasos de la estrategia se cumplen en la vela actual
+  function simLive() {
+    const el = $('#live'); if (!el) return;
+    if (!SIM.assist) { el.innerHTML = '<h2>Checklist</h2><p class="small muted">Ayudas desactivadas. Actívalas en “Cuenta y ayudas”.</p>'; return; }
+    const { S: Ss, t } = SIM, C = Ss.C, px = C[t].c;
+    const inWin = t >= E.OPEN && t < E.WIN_END;
+    const sw = E.sweeps(C, t + 1).filter((x) => x.j >= Math.max(E.OPEN - 2, t - 15) && x.j <= t);
+    const s = sw[sw.length - 1], dir = s ? s.dir : 0;
+    const iv = dir ? E.ifvgs(C, t + 1).filter((x) => x.dir === dir && x.t >= t - 3 && x.t <= t) : [];
+    let tgt = null, rr = 0;
+    if (dir) {
+      const seg = C.slice(s.j, t + 1);
+      const stop = dir > 0 ? Math.min(...seg.map((b) => b.l)) - 1 : Math.max(...seg.map((b) => b.h)) + 1;
+      const risk = Math.abs(px - stop);
+      tgt = E.targets(C, t, dir).find((x) => Math.abs(x.p - px) >= risk);
+      if (tgt) rr = Math.abs(tgt.p - px) / risk;
+    }
+    const side = dir > 0 ? 'compras' : 'ventas';
+    const items = [
+      [inWin ? 'ok' : 'no', 'Horario operativo', t < E.OPEN ? 'Abre a las 9:30' : inWin ? 'Ventana abierta' : 'Ventana cerrada'],
+      [s ? 'ok' : inWin ? 'wait' : 'no', 'Toma de liquidez', s ? `${E.hhmm(s.j)} barrió un ${s.level.type === 'L' ? 'mínimo' : 'máximo'} → ${side}` : 'Esperando la manipulación'],
+      [iv.length ? 'ok' : s ? 'wait' : 'no', 'IFVG', iv.length ? `Cierre de las ${E.hhmm(iv[iv.length - 1].t)}` : s ? 'Esperando el cierre que invalide un FVG' : 'Primero la toma de liquidez'],
+      [tgt ? 'ok' : s ? 'wait' : 'no', 'Objetivo claro', tgt ? `${tgt.kind} · R:R 1:${rr.toLocaleString('es-ES', { maximumFractionDigits: 1 })}` : s ? 'Sin objetivo con R:R ≥ 1 todavía' : '—'],
+      [SIM.trades.length ? 'no' : 'ok', 'Un trade por sesión', `${SIM.trades.length} de 1 usados`],
+    ];
+    const n = items.filter((x) => x[0] === 'ok').length;
+    el.innerHTML = `<h2>Checklist <span>${n}/${items.length}</span></h2><ul>${items.map(([st, l, d]) => `<li class="${st}"><i>${st === 'ok' ? '✓' : st === 'wait' ? '…' : ''}</i><span>${l}<small>${esc(d)}</small></span></li>`).join('')}</ul>`;
   }
   function simCtrl() {
     const c = $('#sim-ctrl'); if (!c) return;

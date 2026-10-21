@@ -9,13 +9,16 @@ App web para aprender trading con la estrategia del **Esses Bootcamp** de Fede E
 - **Ruta de 50 días** en 5 fases, con resumen, diagrama e ideas clave, más un control de 2 preguntas por día.
 - **Estrategia**: los 3 pasos, los horarios, los 3 modelos (manipulación, continuación y retroceso), el plan de trading y un examen final.
 - **Práctica evaluada**: 7 tipos de ejercicio (FVG, toma de liquidez, IFVG, stop, objetivo, modelo y cálculo de contratos).
-- **Simulador** de sesiones de NQ vela a vela, con temporalidades de 1m a 15m y contexto en 1H o 4H. Al final da una nota de disciplina sobre 100.
+- **Simulador** de sesiones de NQ vela a vela, con temporalidades de 1m a 15m, contexto en 1H o 4H y un checklist en vivo de la estrategia. Al final da una nota de disciplina sobre 100.
 - **Diario** con la curva en R y tus notas.
 - **Niveles** del 1 (Novato) al 5 (Experto).
 
 ## Cómo usarla
 
-Abre `app/index.html` en el navegador. No necesita servidor ni instalación. El progreso se guarda en el `localStorage` del navegador.
+- **En línea**: https://gllm57.github.io/laboratorio-ifvg/ (con GitHub Pages activado en *Settings → Pages → Deploy from a branch → `main` / `(root)`*).
+- **En local**: abre `app/index.html` en el navegador. No necesita servidor ni instalación.
+
+El progreso se guarda en el `localStorage` del navegador.
 
 ## Estructura
 
