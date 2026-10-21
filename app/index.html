@@ -78,19 +78,28 @@ svg .ln { stroke-dasharray: 1; stroke-dashoffset: 0; animation: draw 1.3s ease-o
 .chips { order: 4; display: flex; gap: 6px; }
 .chip { font: 500 12.5px/1 var(--f-body); padding: 9px 12px; border-radius: 999px; background: var(--surface); color: var(--ink-2); white-space: nowrap; }
 .chip.acc { color: var(--accent); }
-.nav { order: 3; display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: var(--surface); margin-left: auto; }
-.nav a { padding: 8px 13px; color: var(--ink-2); text-decoration: none; font-weight: 500; font-size: 14px; border-radius: 999px; white-space: nowrap; transition: background .2s, color .2s; }
+.nav { order: 3; position: relative; display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: var(--surface); margin-left: auto; }
+.nav a { position: relative; z-index: 1; padding: 8px 13px; color: var(--ink-2); text-decoration: none; font-weight: 500; font-size: 14px; border-radius: 999px; white-space: nowrap; transition: color .3s; }
 .nav a:hover { color: var(--ink); }
-.nav a[aria-current="page"] { color: var(--bg); background: var(--ink); }
+.nav a[aria-current="page"] { color: var(--bg); }
+/* píldora que se desliza hasta la sección activa */
+.nav-ind { position: absolute; z-index: 0; left: 0; top: 0; width: 0; height: 0; border-radius: 999px; background: var(--ink); transition: transform .42s cubic-bezier(.3, .9, .2, 1), width .42s cubic-bezier(.3, .9, .2, 1), height .3s; will-change: transform; }
+.nav.instant .nav-ind { transition: none; }
+/* cambio de pantalla: salida rápida y entrada escalonada */
+main { transition: opacity .14s ease, transform .14s ease; }
+main.out { opacity: 0; transform: translateY(-6px); }
+.act:active, .day:active, .excard:active, .g-card:active { transform: scale(.98); }
 .nav a svg { display: none; }
 @media (max-width: 760px) {
   .top { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); } /* el blur crearía un contenedor para la barra fija */
   .chips { margin-left: auto; }
-  .nav { position: fixed; z-index: 6; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); margin: 0; justify-content: space-between; padding: 6px; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
-  .nav a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 7px 2px; font-size: 10.5px; min-height: 48px; justify-content: center; }
-  .nav a svg { display: block; }
-  .nav a[aria-current="page"] svg path { stroke: var(--bg); }
-  main { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)) !important; }
+  /* barra de pestañas pegada al borde inferior, como en una app nativa */
+  .nav { position: fixed; z-index: 6; left: 0; right: 0; bottom: 0; margin: 0; justify-content: space-between; gap: 0; border-radius: 22px 22px 0 0; padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 -8px 30px rgba(0, 0, 0, .35); border-top: 1px solid rgba(255, 255, 255, .04); }
+  .nav a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 7px 2px; font-size: 10.5px; min-height: 52px; justify-content: center; }
+  .nav a svg { display: block; transition: transform .3s cubic-bezier(.3, .9, .2, 1); }
+  .nav a[aria-current="page"] svg { transform: translateY(-1px) scale(1.06); }
+  .nav-ind { border-radius: 18px; }
+  main { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important; }
 }
 body.onb .top, body.onb .nav { display: none; }
 
@@ -440,6 +449,7 @@ button, .btn, a, .opt, .day, .act, .excard { touch-action: manipulation; -webkit
       <span class="sp"></span>
     </div>
     <nav class="nav" aria-label="Secciones">
+      <span class="nav-ind" aria-hidden="true"></span>
       <a href="#inicio" data-v="inicio"><svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><path d="M3 10l8-6 8 6v8H3z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>Inicio</a>
       <a href="#ruta" data-v="ruta"><svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><path d="M4 18c4-8 10 0 14-12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Ruta</a>
       <a href="#estrategia" data-v="estrategia"><svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><path d="M4 4h14v14H4zM8 11l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg>Estrategia</a>

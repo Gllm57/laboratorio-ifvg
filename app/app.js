@@ -38,6 +38,19 @@
   // ---------- Navegación ----------
   const VIEWS = ['inicio', 'ruta', 'estrategia', 'practica', 'simulador', 'diario', 'bienvenida'];
   let view = 'inicio', lessonDay = null;
+  // Posición de scroll por pantalla: al volver de una lección a la ruta, sigues donde estabas
+  const scrollMem = {};
+  let curKey = null, booted = false, swapT = null;
+  const reduceMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+  function moveInd(instant) {
+    const nav = $('.nav'), ind = $('.nav-ind'), a = nav && nav.querySelector('a[aria-current="page"]');
+    if (!ind) return;
+    if (!a) { ind.style.width = '0px'; return; }
+    nav.classList.toggle('instant', !!instant);
+    ind.style.width = a.offsetWidth + 'px'; ind.style.height = a.offsetHeight + 'px';
+    ind.style.transform = `translate(${a.offsetLeft}px, ${a.offsetTop}px)`;
+    if (instant) requestAnimationFrame(() => nav.classList.remove('instant'));
+  }
   function go(hash) {
     const m = /^dia(\d+)$/.exec(hash);
     if (m) { view = 'ruta'; lessonDay = Math.min(50, Math.max(1, +m[1])); }
@@ -45,9 +58,18 @@
     if (!S.onb && !m) view = 'bienvenida';
     if (view !== 'bienvenida') document.body.classList.remove('onb');
     document.querySelectorAll('.nav a').forEach((a) => a.setAttribute('aria-current', a.dataset.v === view ? 'page' : 'false'));
+    moveInd(!booted);
     stopAuto();
-    render();
-    window.scrollTo({ top: 0 });
+    if (curKey) scrollMem[curKey] = window.scrollY;
+    const key = lessonDay ? 'dia' + lessonDay : view;
+    const back = key === 'ruta' && curKey && curKey.startsWith('dia');
+    curKey = key;
+    const swap = () => { render(); window.scrollTo({ top: back ? scrollMem.ruta || 0 : 0 }); $('#main').classList.remove('out'); };
+    clearTimeout(swapT);
+    if (!booted || reduceMotion()) { booted = true; swap(); return; }
+    // salida breve antes de dibujar la pantalla nueva
+    $('#main').classList.add('out');
+    swapT = setTimeout(swap, 140);
   }
   window.addEventListener('hashchange', () => go(location.hash.slice(1)));
 
@@ -625,7 +647,7 @@
     let err = '';
     if (o.sl != null && (o.sl - o.entry) * o.dir >= 0) err = `El stop debe estar ${o.dir > 0 ? 'por debajo' : 'por encima'} de la entrada.`;
     else if (o.tp != null && (o.tp - o.entry) * o.dir <= 0) err = `El TP debe estar ${o.dir > 0 ? 'por encima' : 'por debajo'} de la entrada.`;
-    else if (o.sl != null && qty < 1) err = `Con ${o.risk} % y ${stopPts} puntos de stop no alcanza para 1 contrato de ${SIM.inst}. Usa un micro (MNQ o MES).`;
+    else if (o.sl != null && qty < 1) err = `Con ${o.risk.toLocaleString('es-ES')} % y ${stopPts.toLocaleString('es-ES')} puntos de stop no alcanza para 1 contrato de ${SIM.inst}. Acerca el stop o usa un micro (MNQ o MES).`;
     return { pv, stopPts, riskUsd, qty, realPct, rr, err };
   }
   function simOrder() {
@@ -641,7 +663,7 @@
         <label for="o-risk">Riesgo %<input id="o-risk" type="number" step="0.05" min="0.05" max="5" value="${o.risk}"></label>
       </div>
       <div class="order-sum mono">
-        <span>Stop: <b>${k.stopPts ? k.stopPts.toFixed(2) + ' pts' : '—'}</b></span>
+        <span>Stop: <b>${k.stopPts ? k.stopPts.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + ' pts' : '—'}</b></span>
         <span>R:R: <b>${k.rr != null ? '1:' + k.rr.toLocaleString('es-ES', { maximumFractionDigits: 2 }) : '—'}</b></span>
         <span>Contratos: <b>${k.qty || '—'} ${SIM.inst}</b></span>
         <span>Riesgo real: <b>${k.qty ? (k.qty * k.stopPts * k.pv).toLocaleString('es-ES') + ' $ · ' + k.realPct.toLocaleString('es-ES', { maximumFractionDigits: 2 }) + ' %' : '—'}</b></span>
@@ -746,8 +768,9 @@
 
   // ---------- Arranque ----------
   let rz, lastW = window.innerWidth;
-  window.addEventListener('resize', () => { if (window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(rz); rz = setTimeout(() => { if (view === 'simulador') simDraw(); else if (view !== 'practica') render(); }, 250); });
+  window.addEventListener('resize', () => { moveInd(true); if (window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(rz); rz = setTimeout(() => { if (view === 'simulador') simDraw(); else if (view !== 'practica') render(); }, 250); });
   go(location.hash.slice(1));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveInd(true));
   if ('serviceWorker' in navigator && location.protocol === 'https:' && /github\.io$/.test(location.hostname)) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* sin modo offline */ });
   }
