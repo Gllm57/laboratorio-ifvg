@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#111214">
+<meta name="description" content="Aprende la estrategia del Esses Bootcamp: 50 lecciones, práctica evaluada y simulador.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lab IFVG">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
 <title>Laboratorio IFVG</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -374,6 +382,49 @@ details.panel summary { cursor: pointer; font-weight: 500; }
 .tile b { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .tile b small { font-size: 14px; color: var(--ink-2); font-weight: 500; }
 .tile .sub { color: var(--ink-2); font-size: 12px; }
+
+/* Teoría ampliada */
+.lesson-bar { height: 5px; }
+.th { gap: 10px; }
+.th h2 { display: flex; align-items: center; gap: 10px; font-size: 18px; }
+.th-n { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12.5px; font-weight: 600; background: var(--soft); color: var(--accent); }
+.th > p { color: #d4d5d8; font-size: 15.5px; line-height: 1.7; max-width: 66ch; }
+.th .dg { margin-top: 4px; }
+.th .dg-chart, .th .dg-card { background: var(--bg); }
+.example { background: linear-gradient(var(--surface), var(--surface)) padding-box, var(--grad) border-box; border: 1.5px solid transparent; }
+.example p { color: #d4d5d8; }
+.rrbars { display: grid; gap: 10px; }
+.rrbars > div { display: grid; grid-template-columns: 52px 1fr 48px; gap: 10px; align-items: center; font-size: 13px; }
+.rr-bar { display: flex; height: 30px; border-radius: 999px; overflow: hidden; font-weight: 600; font-size: 12px; }
+.rr-bar i { display: flex; align-items: center; justify-content: center; font-style: normal; color: var(--on-accent); transform-origin: left; animation: grow .8s var(--ease) backwards; }
+.rr-bar .loss { background: #f1c6de; } .rr-bar .win { background: #c9ddc4; }
+.rr-l { font-weight: 600; } .rr-w { text-align: right; color: var(--accent); font-variant-numeric: tabular-nums; }
+.flow { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: fl; }
+.flow li { counter-increment: fl; position: relative; display: grid; gap: 2px; padding: 12px 14px 12px 50px; border-radius: 18px; background: var(--soft); }
+.flow li::before { content: counter(fl); position: absolute; left: 12px; top: 12px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; background: var(--bg); color: var(--ink-2); }
+.flow li span { font-size: 13px; color: var(--ink-2); }
+.flow li.go { background: var(--grad); color: var(--on-accent); }
+.flow li.go::before { content: "✓"; background: rgba(22, 23, 26, .12); color: var(--on-accent); }
+.flow li.go span { color: #3b3d35; }
+
+/* Teléfonos */
+button, .btn, a, .opt, .day, .act, .excard { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+@media (max-width: 760px) {
+  .tfbar button { min-height: 40px; padding: 8px 12px; }
+  .sim { display: flex; flex-direction: column; }
+  .sim-top { display: contents; }
+  .sim-stats { order: 1; } .sim-tfrow { order: 2; } .sim-chart { order: 3; } .sim-ctrl { order: 4; } #sim-order { order: 5; } #sim-result { order: 6; } .live { order: 7; } .htf { order: 8; } .sim .settings { order: 9; }
+  .sim-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .sim-stats > div { padding: 9px 10px; border-radius: 16px; }
+  .sim-stats span { font-size: 10.5px; } .sim-stats b { font-size: 14.5px; }
+  .sim-tfrow .small { display: none; }
+  .page-head.slim .lead { display: none; }
+  .th > p { font-size: 15px; }
+  .actions { grid-template-columns: 1fr 1fr; } .actions .act:first-child { grid-column: 1 / -1; min-height: 96px; }
+  .pager .btn { flex: 1; }
+  .sim-ctrl .btn:not(.buy):not(.sell):not(.ghost) { flex: 1 1 28%; padding: 0 8px; font-size: 14px; }
+}
+@media (max-width: 400px) { #hdr-xp { display: none; } .logo b { font-size: 15px; } .sim-stats b { font-size: 13px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -406,6 +457,9 @@ details.panel summary { cursor: pointer; font-weight: 500; }
 <script src="engine.js"></script>
 <script src="charts.js"></script>
 <script src="content.js"></script>
+<script src="teoria1.js"></script>
+<script src="teoria2.js"></script>
+<script src="teoria3.js"></script>
 <script src="diagrams.js"></script>
 <script src="app.js"></script>
 </body>

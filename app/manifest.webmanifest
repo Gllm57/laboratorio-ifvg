@@ -1,0 +1,12 @@
+{
+  "name": "Laboratorio IFVG",
+  "short_name": "Lab IFVG",
+  "description": "Aprende la estrategia del Esses Bootcamp: lecciones, práctica y simulador.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111214",
+  "theme_color": "#111214",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

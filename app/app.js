@@ -84,10 +84,10 @@
     </section>`);
     m.appendChild(el);
     const vis = $('#w-vis');
-    if (sl.v === 'chart') { const c = H('<div class="float-card"><div class="fc-head"><span>NQ · 1 minuto</span><span class="tag">Modelo 1</span></div><div id="w-chart"></div><div class="fc-msg">El precio barrió el mínimo e invalidó el FVG</div></div>'); vis.appendChild(c); vis.appendChild(H('<span class="float-tag">✓ Toma de liquidez + IFVG</span>')); requestAnimationFrame(() => { const F = CH.findSession('model1', 'm1', (S2, f) => f && f.model === 1); const { ann } = CH.setupAnn(F.S.C, F.f); CH.candlesA($('#w-chart'), F.S.C.slice(22, F.f.t + 12), { ann: ann.filter((a) => a.k === 'box' || a.k === 'h').map((a) => { const y = { ...a }; for (const k of ['i', 'i0', 'i1']) if (y[k] != null) y[k] -= 22; y.t = ''; return y; }), h: 170, axis: false }); }); }
+    if (sl.v === 'chart') { const c = H('<div class="float-card"><div class="fc-head"><span>NQ · 1 minuto</span><span class="tag">Modelo 1</span></div><div id="w-chart"></div><div class="fc-msg">El precio barrió el mínimo e invalidó el FVG</div></div>'); vis.appendChild(c); vis.appendChild(H('<span class="float-tag">✓ Toma de liquidez + IFVG</span>')); requestAnimationFrame(() => { if (!$('#w-chart')) return; const F = CH.findSession('model1', 'm1', (S2, f) => f && f.model === 1); const { ann } = CH.setupAnn(F.S.C, F.f); CH.candlesA($('#w-chart'), F.S.C.slice(22, F.f.t + 12), { ann: ann.filter((a) => a.k === 'box' || a.k === 'h').map((a) => { const y = { ...a }; for (const k of ['i', 'i0', 'i1']) if (y[k] != null) y[k] -= 22; y.t = ''; return y; }), h: 170, axis: false }); }); }
     if (sl.v === 'steps') vis.appendChild(H('<div class="w-steps"><div><i>1</i><b>Toma de liquidez</b><span>Barre un máximo o mínimo</span></div><div><i>2</i><b>IFVG</b><span>Un cierre invalida el FVG</span></div><div><i>3</i><b>Objetivo claro</b><span>Liquidez sin tomar, R:R ≥ 1</span></div></div>'));
     if (sl.v === 'score') vis.appendChild(H('<div class="w-score"><div class="ring"><b>92</b><span>de 100</span></div><ul><li>✓ Horario</li><li>✓ Toma de liquidez</li><li>✓ IFVG</li><li class="warn-i">! Stop lejos</li></ul></div>'));
-    const finish = () => { S.onb = true; save(); document.body.classList.remove('onb'); location.hash = 'inicio'; go('inicio'); };
+    const finish = () => { S.onb = true; save(); document.body.classList.remove('onb'); if (location.hash === '#inicio') go('inicio'); else location.hash = 'inicio'; };
     $('#w-next').onclick = () => { if (last) finish(); else { slide++; render(); } };
     $('#w-skip').onclick = finish;
   }
@@ -164,22 +164,41 @@
     }
   }
 
+  // Dibuja un diagrama cuando su contenedor se acerca a la pantalla (ahorra trabajo en teléfonos)
+  let io = null;
+  function lazyDG(el, key) {
+    const f = DG[key]; if (!f) return;
+    const run = () => { if (el.dataset.done) return; el.dataset.done = '1'; f(el); };
+    if (!('IntersectionObserver' in window)) return requestAnimationFrame(run);
+    if (!io) io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { io.unobserve(e.target); e.target._run(); } }), { rootMargin: '400px 0px' });
+    el._run = run; io.observe(el);
+  }
+
   function vLesson(m) {
     const L = window.LESSONS.find((l) => l.d === lessonDay);
     const P = window.PHASES.find((p) => L.d >= p.days[0] && L.d <= p.days[1]);
-    S.last = L.d; save();
+    const T = (window.THEORY || {})[L.d] || { secs: [], err: [], ej: '' };
+    if (S.last !== L.d) { S.last = L.d; save(); }
     const st = S.lessons[L.d] || {};
+    const words = (L.sum + T.secs.map((x) => x.p).join(' ') + (T.ej || '')).split(/\s+/).length;
+    const mins = Math.max(2, Math.round(words / 180));
+    const usedInSecs = new Set(T.secs.map((x) => x.dg).filter(Boolean));
     const el = H(`<article class="lesson">
       <nav class="crumbs"><a href="#ruta">Ruta</a> / Fase ${P.id} · ${P.name}</nav>
-      <header class="page-head"><p class="eyebrow">Día ${L.d} de 50</p><h1>${esc(L.t)}</h1><p class="lead">${esc(L.sum)}</p></header>
-      <div class="dg" id="dg"></div>
-      <section class="panel"><h2>Ideas clave</h2><ul class="keys">${L.pts.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
-        <p class="muted small">Video original: “${esc(L.t)} | Esses Bootcamp Día ${L.d}” en la <a href="${PLAYLIST}" target="_blank" rel="noopener">playlist de YouTube</a>.</p></section>
-      <section class="panel quiz" id="quiz"><h2>Control del día</h2>${st.passed ? '<p class="pill ok">Aprobado</p>' : ''}</section>
+      <i class="gbar lesson-bar" aria-label="Día ${L.d} de 50"><i style="width:${L.d * 2}%"></i></i>
+      <header class="page-head"><p class="eyebrow">Día ${L.d} de 50 · ${mins} min de lectura${st.passed ? ' · completado' : ''}</p><h1>${esc(L.t)}</h1><p class="lead">${esc(L.sum)}</p></header>
+      ${usedInSecs.has(L.dg) ? '' : '<div class="dg" id="dg"></div>'}
+      ${T.secs.map((x, i) => `<section class="card th"><h2><span class="th-n">${i + 1}</span>${esc(x.h)}</h2><p>${esc(x.p)}</p>${x.dg ? `<div class="dg" data-dg="${x.dg}"></div>` : ''}</section>`).join('')}
+      <section class="card"><h2>Ideas clave</h2><ul class="keys">${L.pts.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>
+      ${T.err.length ? `<section class="card"><h2>Errores comunes</h2><ul class="x">${T.err.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
+      ${T.ej ? `<section class="card example"><h2>Ejemplo</h2><p>${esc(T.ej)}</p></section>` : ''}
+      <p class="muted small">Video original: “${esc(L.t)} | Esses Bootcamp Día ${L.d}” en la <a href="${PLAYLIST}" target="_blank" rel="noopener">playlist de YouTube</a>.</p>
+      <section class="card quiz" id="quiz"><h2>Control del día</h2>${st.passed ? '<p class="pill ok">Aprobado</p>' : ''}</section>
       <nav class="pager">${L.d > 1 ? `<a class="btn" href="#dia${L.d - 1}">← Día ${L.d - 1}</a>` : '<span></span>'}${L.d < 50 ? `<a class="btn" href="#dia${L.d + 1}">Día ${L.d + 1} →</a>` : '<a class="btn" href="#estrategia">Examen final →</a>'}</nav>
     </article>`);
     m.appendChild(el);
-    requestAnimationFrame(() => { const f = DG[L.dg]; if (f) f($('#dg')); });
+    if ($('#dg')) lazyDG($('#dg'), L.dg);
+    el.querySelectorAll('[data-dg]').forEach((d) => lazyDG(d, d.dataset.dg));
     quiz($('#quiz'), L.q, (ok, total, firstTry) => {
       const prev = S.lessons[L.d] || {};
       if (ok === total) {
@@ -188,7 +207,7 @@
         save();
         return L.d < 50 ? `<p class="ok-msg">Día ${L.d} completado. <a href="#dia${L.d + 1}">Seguir con el día ${L.d + 1}</a></p>` : '<p class="ok-msg">Terminaste el bootcamp. Ahora: examen final y sesiones simuladas.</p>';
       }
-      return `<p class="bad-msg">${ok}/${total}. Repasa las ideas clave y vuelve a intentarlo.</p>`;
+      return `<p class="bad-msg">${ok}/${total}. Repasa la teoría y vuelve a intentarlo.</p>`;
     });
   }
 
@@ -354,7 +373,8 @@
 
   function exRun(m) {
     const meta = EXS.find((x) => x.id === EX.id);
-    if (!EX.round) EX.round = makeRound(EX.id);
+    for (let k = 0; k < 3 && !EX.round; k++) EX.round = makeRound(EX.id);
+    if (!EX.round) { m.appendChild(H('<section class="card"><p>No se pudo generar este ejercicio. Vuelve a intentarlo.</p><a class="btn" href="#practica">Volver</a></section>')); EX = null; return; }
     const R = EX.round;
     const el = H(`<section class="exrun"><nav class="crumbs"><a href="#practica" id="ex-back">Práctica</a> / ${meta.t}</nav>
       <div class="exbar"><b>Ejercicio ${EX.k + 1} de 5</b><span>Aciertos: ${EX.ok}</span></div>
@@ -367,6 +387,7 @@
     const finish = (res, extra) => {
       answered = true;
       if (res.ok) EX.ok++;
+      try { navigator.vibrate?.(res.ok ? 15 : [30, 40, 30]); } catch (e) { /* sin vibración */ }
       draw([...(R.reveal || []), ...(extra || [])]);
       const last = EX.k === 4;
       $('#ex-fb').innerHTML = `<div class="fb-box ${res.ok ? 'good' : 'bad'}"><b>${res.ok ? 'Bien' : 'Revisa'}</b><p>${esc(res.msg)}</p></div><button class="btn pri" id="ex-next" type="button">${last ? 'Ver resultado' : 'Siguiente'}</button>`;
@@ -381,7 +402,7 @@
       if (R.mode === 'bar') { if (q.i < 0 || q.i >= R.C.length) return; finish(R.check(q.i + R.a), [{ k: 'mark', i: q.i + R.a, pos: 'above', c: 'mute', t: 'Tu respuesta' }]); }
       if (R.mode === 'price') finish(R.check(q.p), [{ k: 'h', p: q.p, c: 'info', t: `Tu respuesta ${fmt(q.p)}`, dash: false, right: true }]);
     }
-    if (R.C) requestAnimationFrame(() => draw());
+    if (R.C) requestAnimationFrame(() => { if ($('#ex-chart')) draw(); });
     else $('#ex-chart').hidden = true;
     const inp = $('#ex-input');
     if (R.mode === 'choice') {
@@ -443,6 +464,7 @@
     $('#s-inst').addEventListener('change', (e) => { SIM.inst = e.target.value; simDraw(); });
     $('#s-assist').addEventListener('change', (e) => { SIM.assist = e.target.checked; simDraw(); });
     requestAnimationFrame(() => {
+      if (!$('#htf')) return; // se cambió de pantalla antes de dibujar
       const drawHTF = (tf) => {
         SIM.htfTf = tf;
         CH.candles($('#htf'), E.agg(SIM.S.htf.C, tf / 60), { h: 120, axis: false, maxBw: tf === 60 ? 8 : 16 });
@@ -492,8 +514,15 @@
     const { S: Ss, t } = SIM;
     const ann = SIM.done && SIM.result?.reveal ? [...simAnn(), ...SIM.result.reveal] : simAnn();
     const tf = SIM.tf, A = E.agg(Ss.C, tf, SIM.done ? Ss.C.length - 1 : t);
-    const api = CH.candles(host, A, { tf, slots: Math.ceil(E.BARS / tf), ann: CH.mapAnn(ann, tf), times: true, h: 340, minBw: 6, cross: true, onPick: SIM.order ? orderPick : null, label: `NQ ${tf} minutos` });
-    host.scrollLeft = Math.max(0, api.x(A.length - 1) - host.clientWidth + 120);
+    const total = Math.ceil(E.BARS / tf), cw = host.clientWidth || 640;
+    // En pantallas estrechas se muestra solo una ventana de velas que cabe sin desplazarse (y algo de aire a la derecha)
+    const fit = Math.floor((cw - 68) / 7);
+    let s0 = 0, slots = total;
+    if (!SIM.done && fit < total) { slots = fit; s0 = Math.max(0, A.length - (fit - 6)); }
+    const mapped = CH.mapAnn(ann, tf).filter((x) => (x.i1 == null || x.i1 > s0) && (x.i == null || x.i >= s0))
+      .map((x) => { const y = { ...x }; for (const k of ['i', 'i0', 'i1']) if (y[k] != null) y[k] = Math.max(0, y[k] - s0); return y; });
+    const api = CH.candles(host, A.slice(s0), { tf, t0: s0 * tf, slots, ann: mapped, times: true, h: cw < 500 ? 300 : 340, minBw: 6, cross: true, onPick: SIM.order ? orderPick : null, label: `NQ ${tf} minutos` });
+    host.scrollLeft = Math.max(0, api.x(A.length - 1 - s0) - host.clientWidth + 120);
     simStats(); simCtrl(); simOrder();
   }
   function simStats() {
@@ -541,7 +570,7 @@
     c.innerHTML = `<div class="row">
       <button class="btn" id="sim-step" type="button" ${SIM.order ? 'disabled' : ''}>+1 min</button>
       <button class="btn" id="sim-auto" type="button" ${SIM.order ? 'disabled' : ''}>${autoT ? 'Pausa' : 'Reproducir'}</button>
-      <button class="btn" id="sim-5" type="button" ${SIM.order ? 'disabled' : ''}>+1 vela de ${SIM.tf}m${SIM.tf === 1 ? ' ×5' : ''}</button>
+      <button class="btn" id="sim-5" type="button" ${SIM.order ? 'disabled' : ''}>${SIM.tf === 1 ? '+5 min' : `+1 vela ${SIM.tf}m`}</button>
       <span class="sp"></span>
       <button class="btn buy" id="sim-buy" type="button" ${canTrade ? '' : 'disabled'}>Comprar</button>
       <button class="btn sell" id="sim-sell" type="button" ${canTrade ? '' : 'disabled'}>Vender</button>
@@ -633,6 +662,7 @@
   function simFinish() {
     stopAuto();
     if (SIM.done) return;
+    SIM.order = null;
     const C = SIM.S.C;
     for (const tr of SIM.trades) if (tr.exitI == null) {
       // la operación sigue su curso hasta SL/TP (el resto de la sesión ya está generado)
@@ -653,7 +683,7 @@
     let reveal = [];
     if (sys) {
       const sa = CH.setupAnn(C, sys, { open: false });
-      reveal = sa.ann.map((x) => (x.k === 'mark' && x.t === 'IFVG → entrada' ? { ...x, t: `Sistema: Modelo ${sys.model}` } : x)).filter((x) => x.k !== 'trade' || !SIM.trades.length);
+      reveal = sa.ann.map((x) => (x.k === 'mark' && x.t === 'IFVG' ? { ...x, t: `Sistema: Modelo ${sys.model}` } : x)).filter((x) => x.k !== 'trade' || !SIM.trades.length);
     }
     SIM.result = { grade, outcome, sys, reveal };
     const rec = { at: Date.now(), seed: SIM.seed, score: grade.score, R: +outcome.toFixed(2), trades: SIM.trades.map((x) => ({ dir: x.dir, t: x.t, R: +x.R.toFixed(2), reason: x.reason, riskPct: +x.riskPct.toFixed(2) })), model: sys?.model ?? null, sysT: sys?.t ?? null, note: '' };
@@ -696,6 +726,7 @@
       const ch = H('<section class="panel"><h2>Curva en R y disciplina</h2><div id="j-curve"></div></section>');
       m.appendChild(ch);
       requestAnimationFrame(() => {
+        if (!$('#j-curve')) return;
         let e = 0; const v = [0, ...S.sims.map((x) => (e += x.R))];
         const d = [S.sims[0].score / 10, ...S.sims.map((x, i, a) => a.slice(Math.max(0, i - 4), i + 1).reduce((q, w) => q + w.score, 0) / Math.min(5, i + 1) / 10)];
         CH.lines($('#j-curve'), [{ v, c: 'info', label: `${e.toFixed(1)} R`, area: true }, { v: d, c: 'acc', dash: true, label: 'Disciplina ÷10 (media móvil)' }], { h: 220, refs: [{ v: 0, c: 'mute' }], xlabel: 'Sesiones' });
@@ -717,4 +748,7 @@
   let rz, lastW = window.innerWidth;
   window.addEventListener('resize', () => { if (window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(rz); rz = setTimeout(() => { if (view === 'simulador') simDraw(); else if (view !== 'practica') render(); }, 250); });
   go(location.hash.slice(1));
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && /github\.io$/.test(location.hostname)) {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* sin modo offline */ });
+  }
 })();

@@ -64,7 +64,18 @@
     }
     const ann = o.ann || [];
     const under = s('g', {}, svg), body = s('g', {}, svg), over = s('g', {}, svg);
-    const lbl = (g, tx, ty, t, c, anchor = 'start') => s('text', { x: tx, y: ty, class: 'lbl', 'text-anchor': anchor, style: `fill:${C_[c] || C_.ink}`, text: t }, g);
+    // Etiqueta que nunca se sale del área del gráfico
+    const lbl = (g, tx, ty, t, c, anchor = 'start') => {
+      const el = s('text', { x: tx, y: ty, class: 'lbl', 'text-anchor': anchor, style: `fill:${C_[c] || C_.ink}`, text: t }, g);
+      let w = 0; try { w = el.getComputedTextLength(); } catch (e) { /* sin medida */ }
+      if (w) {
+        const left = anchor === 'end' ? tx - w : anchor === 'middle' ? tx - w / 2 : tx;
+        const maxR = plotR - 2;
+        if (left + w > maxR) { el.setAttribute('text-anchor', 'end'); el.setAttribute('x', maxR); }
+        else if (left < 2) { el.setAttribute('text-anchor', 'start'); el.setAttribute('x', 2); }
+      }
+      return el;
+    };
     for (const a of ann) {
       const c = C_[a.c] || C_.acc;
       if (a.k === 'shade') {
@@ -73,7 +84,7 @@
       } else if (a.k === 'box') {
         const i1 = Math.min(a.i1 ?? n, slots);
         s('rect', { x: x(a.i0) - bw / 2, y: y(Math.max(a.p0, a.p1)), width: Math.max(2, (i1 - a.i0) * bw), height: Math.max(2, Math.abs(y(a.p0) - y(a.p1))), style: `fill:${c};opacity:${a.op ?? 0.22};stroke:${c};stroke-width:1` }, under);
-        if (a.t) lbl(over, x(a.i0) - bw / 2 + 3, y(Math.max(a.p0, a.p1)) - 4, a.t, a.c);
+        if (a.t) lbl(over, x(a.i0) - bw / 2 + 3, a.lb ? y(Math.min(a.p0, a.p1)) + 12 : y(Math.max(a.p0, a.p1)) - 4, a.t, a.c);
       } else if (a.k === 'trade') {
         const i1 = Math.min(a.i1 ?? slots, slots);
         const w = Math.max(2, (i1 - a.i0) * bw);
@@ -211,8 +222,8 @@
     const a = [
       { k: 'h', p: lv.p, i0: lv.i, i1: f.sweep.j + 4, c: 'acc', t: o.lvLabel || (lv.pm ? (lv.type === 'H' ? 'Máximo pre-market' : 'Mínimo pre-market') : 'Liquidez'), below: lv.type === 'L' },
       { k: 'mark', i: f.sweep.j, pos: f.dir > 0 ? 'below' : 'above', c: 'acc', t: 'Toma de liquidez' },
-      { k: 'box', i0: fz.i - 1, i1: f.t + 1, p0: fz.bot, p1: fz.top, c: f.dir > 0 ? 'bear' : 'bull', t: 'FVG' },
-      { k: 'mark', i: f.t, pos: f.dir > 0 ? 'above' : 'below', c: 'info', t: 'IFVG → entrada', anchor: 'end' },
+      { k: 'box', i0: fz.i - 1, i1: f.t + 1, p0: fz.bot, p1: fz.top, c: f.dir > 0 ? 'bear' : 'bull', t: 'FVG', lb: f.dir > 0 },
+      { k: 'mark', i: f.t, pos: f.dir > 0 ? 'above' : 'below', c: 'info', t: 'IFVG', anchor: 'end' },
       { k: 'trade', i0: f.t, i1: Math.min(r.i + 1, C.length), entry: f.entry, sl: f.stop, tp: f.target },
     ];
     if (o.open !== false) a.push({ k: 'v', i: E.OPEN, c: 'mute', t: '9:30' });

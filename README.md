@@ -7,7 +7,7 @@ App web para aprender trading con la estrategia del **Esses Bootcamp** de Fede E
 ## Qué incluye
 
 - **Bienvenida** en 3 pasos la primera vez que abres la app.
-- **Ruta de 50 días** en 5 fases, con resumen, diagrama e ideas clave, más un control de 2 preguntas por día.
+- **Ruta de 50 días** en 5 fases. Cada día tiene teoría detallada por secciones con gráficos, ideas clave, errores comunes, un ejemplo resuelto y un control de 2 preguntas.
 - **Estrategia**: los 3 pasos, los horarios, los 3 modelos (manipulación, continuación y retroceso), el plan de trading y un examen final.
 - **Práctica evaluada**: 7 tipos de ejercicio (FVG, toma de liquidez, IFVG, stop, objetivo, modelo y cálculo de contratos).
 - **Simulador** de sesiones de NQ vela a vela, con temporalidades de 1m a 15m, contexto en 1H o 4H y un checklist en vivo de la estrategia. Al final da una nota de disciplina sobre 100.
@@ -21,6 +21,8 @@ App web para aprender trading con la estrategia del **Esses Bootcamp** de Fede E
 
 El progreso se guarda en el `localStorage` del navegador.
 
+En el teléfono, abre el enlace y usa *Añadir a pantalla de inicio*: la app se instala como una aplicación y funciona sin conexión.
+
 ## Estructura
 
 | Archivo | Contenido |
@@ -28,6 +30,8 @@ El progreso se guarda en el `localStorage` del navegador.
 | `app/engine.js` | Generador de sesiones de 1m, detectores (FVG, IFVG, swings, tomas de liquidez), agregación de temporalidades y evaluación de trades |
 | `app/charts.js` | Gráficos de velas y de líneas en SVG |
 | `app/content.js` | Las 50 lecciones, sus preguntas y el examen |
+| `app/teoria1.js` … `teoria3.js` | Teoría ampliada de cada día: secciones, errores comunes y ejemplos |
+| `app/sw.js`, `app/manifest.webmanifest` | Instalación en el teléfono y modo sin conexión |
 | `app/diagrams.js` | Diagramas de cada lección |
 | `app/app.js` | Navegación, progreso, prácticas, simulador y diario |
 | `maqueta/` | Propuesta de rediseño: pantallas de Inicio, Simulador, Lección y Móvil (formato `.dc.html` del lienzo de diseño de Claude) |

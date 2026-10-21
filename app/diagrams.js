@@ -107,11 +107,11 @@
     cap(host, 'Alcista: HH y HL. Bajista: LH y LL. El cambio aparece cuando se pierde el último HL.');
   };
   DG.bos = (host) => {
-    const { C, ann } = CH.script(8, 100, 1.4, [['d', 4, 107, 0.3], ['d', 3, 103, 0.3, 'HL'], ['d', 4, 112, 0.3, 'HH'], ['d', 3, 107, 0.3, 'Último HL'], ['d', 4, 113.5, 0.3, 'LH'], ['i', 3, 101], ['d', 4, 103, 0.3]]);
-    const hl = Math.min(...C.slice(12, 16).map((b) => b.l));
-    ann.push({ k: 'h', p: hl, i0: 13, i1: C.length, c: 'bear', t: 'Cierre por debajo = quiebre (BOS)', below: true });
+    const { C, ann } = CH.script(8, 100, 1.4, [['d', 4, 106, 0.3], ['d', 3, 103, 0.3, 'HL'], ['d', 4, 110, 0.3, 'HH'], ['d', 3, 106.5, 0.3, 'HL'], ['i', 3, 114.5], ['d', 4, 113.5, 0.3]]);
+    const hh = Math.max(...C.slice(9, 12).map((b) => b.h));
+    ann.push({ k: 'h', p: hh, i0: 10, i1: C.length, c: 'bull', t: 'Cierre por encima del último HH = BOS', right: true, below: true });
     CH.candlesA(box(host), C, { ann, h: 260, dec: 0 });
-    cap(host, 'El quiebre se confirma con el CIERRE de la vela, no con la mecha.');
+    cap(host, 'A favor de la tendencia: el cierre supera el último máximo y confirma continuación. Se confirma con el CIERRE, no con la mecha.');
   };
   DG.liquidity = (host) => {
     const { C, ann } = CH.script(12, 100, 1.2, [['d', 4, 109.5, 0.3], ['d', 3, 104, 0.3], ['d', 4, 109.6, 0.3], ['d', 3, 103.5, 0.3], ['d', 4, 109.4, 0.3], ['d', 3, 103.8, 0.3], ['d', 3, 106, 0.3]]);
@@ -142,8 +142,8 @@
     const { C } = CH.script(41, 100, 1.2, [['d', 3, 104, 0.4], ['i', 4, 95], ['d', 2, 95.6, 0.3], ['s', -1, 94.6, 1.2], ['i', 3, 103], ['d', 4, 105, 0.4]]);
     const iv = E.ifvgs(C).find((x) => x.dir > 0);
     const ann = iv ? [
-      { k: 'box', i0: iv.fvg.i - 1, i1: C.length, p0: iv.fvg.bot, p1: iv.fvg.top, c: 'bear', t: 'FVG bajista' },
-      { k: 'mark', i: iv.t, pos: 'above', c: 'info', t: 'Cierra arriba = IFVG alcista', anchor: 'end' },
+      { k: 'box', i0: iv.fvg.i - 1, i1: C.length, p0: iv.fvg.bot, p1: iv.fvg.top, c: 'bear', t: 'FVG bajista', lb: true },
+      { k: 'mark', i: iv.t, pos: 'above', c: 'info', t: 'Cierre arriba = IFVG', anchor: 'end' },
     ] : [];
     CH.candlesA(box(host), C, { ann, h: 260, dec: 0 });
     cap(host, 'El mercado no respeta el FVG bajista y una vela cierra por encima. Ese cierre es la entrada en compras.');
@@ -280,5 +280,71 @@
   DG.business = (host) => card(host, list(['Separa el dinero del negocio del personal', 'Registra costos: evaluaciones, datos, plataformas', 'Consulta a un contador de tu país antes de abrir una sociedad', 'Guarda comprobantes de cada retiro'], 'steps'));
   DG.profits = (host) => card(host, `<div class="split"><div style="flex:4" class="s1">Vida 40 %</div><div style="flex:4" class="s2">Reinversión 40 %</div><div style="flex:2" class="s3">Ahorro 20 %</div></div><p class="dg-cap">Ejemplo de reparto; define tus porcentajes antes del primer retiro.</p>`);
 
+  // --- Diagramas añadidos para la teoría ampliada ---
+  DG.fvgbear = (host) => {
+    const { C } = CH.script(33, 112, 1.2, [['d', 5, 111, 0.4], ['i', 4, 102], ['d', 4, 101, 0.4]]);
+    const f = E.fvgs(C).find((x) => x.dir < 0);
+    const ann = f ? [
+      { k: 'box', i0: f.i - 1, i1: C.length, p0: f.bot, p1: f.top, c: 'bear', t: 'FVG bajista (vacío)' },
+      { k: 'num', i: f.i - 1, p: C[f.i - 1].h + 1.1, t: '1', c: 'ink' }, { k: 'num', i: f.i, p: C[f.i].h + 1.1, t: '2', c: 'ink' }, { k: 'num', i: f.i + 1, p: C[f.i + 1].h + 1.1, t: '3', c: 'ink' },
+    ] : [];
+    CH.candlesA(box(host), C, { ann, h: 250, dec: 0 });
+    cap(host, 'El máximo de la vela 3 queda por debajo del mínimo de la vela 1: FVG bajista.');
+  };
+  DG.ifvgbear = (host) => {
+    const { C } = CH.script(43, 100, 1.2, [['d', 3, 96, 0.4], ['i', 4, 105], ['d', 2, 104.4, 0.3], ['s', 1, 105.4, 1.2], ['i', 3, 97], ['d', 4, 95.5, 0.4]]);
+    const iv = E.ifvgs(C).find((x) => x.dir < 0);
+    const ann = iv ? [
+      { k: 'box', i0: iv.fvg.i - 1, i1: C.length, p0: iv.fvg.bot, p1: iv.fvg.top, c: 'bull', t: 'FVG alcista' },
+      { k: 'mark', i: iv.t, pos: 'below', c: 'info', t: 'Cierre abajo = IFVG', anchor: 'end' },
+    ] : [];
+    CH.candlesA(box(host), C, { ann, h: 260, dec: 0 });
+    cap(host, 'El espejo: barre un máximo, una vela cierra por debajo del FVG alcista y se buscan ventas.');
+  };
+  DG.choch = (host) => {
+    const { C, ann } = CH.script(18, 100, 1.3, [['d', 4, 106, 0.3], ['d', 3, 103, 0.3, 'HL'], ['d', 4, 110, 0.3, 'HH'], ['d', 3, 106.5, 0.3], ['d', 2, 109.4, 0.3], ['s', 1, 110.3, 1.3], ['i', 3, 102.5], ['d', 3, 103.5, 0.3]]);
+    const hl = Math.min(...C.slice(12, 15).map((b) => b.l));
+    ann.push({ k: 'h', p: hl, i0: 12, i1: C.length, c: 'bear', t: 'Cierre bajo el último HL = CHoCH', below: true }, { k: 'mark', i: 16, pos: 'above', c: 'acc', t: 'Barre el máximo' });
+    CH.candlesA(box(host), C, { ann, h: 260, dec: 0 });
+    cap(host, 'Primero barre el máximo (toma de liquidez) y después cierra por debajo del último mínimo alto: la tendencia puede estar girando.');
+  };
+  DG.candlepat = (host) => {
+    const { C } = CH.script(5, 100, 1, [['d', 2, 99, 0.2], ['bar', 0, [99, 99.6, 95.2, 99.3]], ['d', 3, 100, 0.2], ['bar', 0, [100, 105.6, 99.8, 105.4]], ['d', 3, 105.5, 0.2], ['bar', 0, [105.5, 107.6, 103.4, 105.6]], ['d', 2, 105, 0.2]]);
+    const ann = [
+      { k: 'txt', i: 2, p: 94.2, t: 'Rechazo (mecha larga)', c: 'acc', anchor: 'middle' },
+      { k: 'txt', i: 6, p: 106.6, t: 'Desplazamiento', c: 'acc', anchor: 'middle' },
+      { k: 'txt', i: 10, p: 108.6, t: 'Indecisión', c: 'mute', anchor: 'middle' },
+    ];
+    CH.candlesA(box(host), C, { ann, h: 230, dec: 0 });
+    cap(host, 'Mecha larga: el precio fue y lo devolvieron. Cuerpo grande: un lado dominó. Cuerpo pequeño con mechas a ambos lados: nadie manda.');
+  };
+  DG.be = (host) => {
+    const F = CH.findSession('model1', 'm1', (S2, f) => f && f.model === 1);
+    if (!F) return;
+    const { S, f } = F; const { ann, res } = CH.setupAnn(S.C, f);
+    const mid = E.swings(S.C).find((x) => x.i > f.t && x.i < res.i && x.type === (f.dir > 0 ? 'H' : 'L') && (x.p - f.entry) * f.dir > 0 && (f.target - x.p) * f.dir > 0);
+    if (mid) ann.push({ k: 'mark', i: mid.i, pos: f.dir > 0 ? 'above' : 'below', c: 'acc', t: 'Primer máximo intermedio' }, { k: 'h', p: f.entry, i0: mid.i, i1: res.i + 1, c: 'acc', t: 'Stop → entrada (BE)', below: f.dir > 0, right: true, dash: true });
+    const a = 22;
+    CH.candlesA(box(host), S.C.slice(a, Math.min(S.C.length, res.i + 6)), { ann: shiftAnn(ann, a), times: true, t0: a, h: 280 });
+    cap(host, 'Al tocar el primer máximo o mínimo intermedio que no es tu objetivo, el stop pasa a la entrada: el trade ya no puede terminar en pérdida.');
+  };
+  DG.rr = (host) => card(host, `<div class="rrbars">${[[1, 50], [1.3, 43], [1.5, 40], [2, 33]].map(([r, w]) => `<div><span class="rr-l">1:${String(r).replace('.', ',')}</span><span class="rr-bar"><i class="loss" style="flex:1">1 R</i><i class="win" style="flex:${r}">${String(r).replace('.', ',')} R</i></span><span class="rr-w">${w} %</span></div>`).join('')}</div>
+    <p class="dg-cap">A la derecha, el porcentaje de acierto mínimo para no perder dinero con cada R:R. Con 1:1,3 basta acertar más del 43 % de las veces.</p>`);
+  DG.risktable = (host) => card(host, `<div class="scroll-x"><table class="tbl"><thead><tr><th>Stop (puntos)</th><th class="r">MNQ (2 $)</th><th class="r">Riesgo real</th><th class="r">NQ (20 $)</th></tr></thead><tbody>
+    ${[10, 15, 20, 25, 30, 40].map((st) => { const q = Math.floor(250 / (st * 2)), n = Math.floor(250 / (st * 20)); return `<tr><td>${st}</td><td class="r">${q}</td><td class="r">${q * st * 2} $</td><td class="r">${n || '—'}</td></tr>`; }).join('')}
+    </tbody></table></div><p class="dg-cap">Cuenta de 50.000 $ al 0,5 % = 250 $ de riesgo. “—” significa que ni un contrato cabe en el riesgo.</p>`);
+  DG.flow = (host) => card(host, `<ol class="flow">
+    <li><b>¿Estoy en la ventana?</b><span>9:30–11:00 o 20:00–21:30</span></li>
+    <li><b>¿Hubo toma de liquidez?</b><span>Barrió un máximo o mínimo y cerró de vuelta</span></li>
+    <li><b>¿Una vela cerró invalidando un FVG?</b><span>IFVG en la dirección contraria al barrido</span></li>
+    <li><b>¿Hay objetivo a 1:1 o más?</b><span>Liquidez sin tomar o FVG sin rellenar</span></li>
+    <li><b>¿Es mi primer trade y el riesgo está calculado?</b><span>0,5–0,7 %</span></li>
+    <li class="go"><b>Entro</b><span>Si alguna respuesta es no: espero o cierro los gráficos</span></li></ol>`);
+
+  // Si la pantalla cambió antes de dibujar, el contenedor ya no existe: no hacer nada
+  for (const k of Object.keys(DG)) {
+    const f = DG[k];
+    DG[k] = (host) => { if (!host || !host.isConnected) return; try { f(host); } catch (e) { console.error('diagrama', k, e); } };
+  }
   window.DG = DG;
 })();
