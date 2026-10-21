@@ -38,6 +38,7 @@
     let lo = Infinity, hi = -Infinity;
     for (let i = 0; i < n; i++) { lo = Math.min(lo, C[i].l); hi = Math.max(hi, C[i].h); }
     for (const a of o.ann || []) for (const k of ['p', 'p0', 'p1', 'entry', 'sl', 'tp']) if (a[k] != null && !a.noScale) { lo = Math.min(lo, a[k]); hi = Math.max(hi, a[k]); }
+    for (const p of o.extraP || []) if (p != null) { lo = Math.min(lo, p); hi = Math.max(hi, p); }
     const pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
     const ih = H - padT - padB;
     const y = (p) => padT + (hi - p) / (hi - lo) * ih;
@@ -130,7 +131,7 @@
       }
     }
     host.style.minHeight = '';
-    const api = { svg, x, y, bw, W, H, hi, lo, n, slots };
+    const api = { svg, x, y, bw, W, H, hi, lo, n, slots, padT, ih };
     if (o.onPick || o.cross) {
       const ch = s('line', { x1: 0, x2: plotR, y1: -10, y2: -10, style: 'stroke:var(--ink-2);stroke-width:1;stroke-dasharray:2 3;pointer-events:none' }, svg);
       const cv = s('line', { x1: -10, x2: -10, y1: padT, y2: H - padB, style: 'stroke:var(--ink-2);stroke-width:1;stroke-dasharray:2 3;pointer-events:none;opacity:.6' }, svg);
