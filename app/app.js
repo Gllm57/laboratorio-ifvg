@@ -771,6 +771,12 @@
   window.addEventListener('resize', () => { moveInd(true); if (window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(rz); rz = setTimeout(() => { if (view === 'simulador') simDraw(); else if (view !== 'practica') render(); }, 250); });
   go(location.hash.slice(1));
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveInd(true));
+  // Ocultar la pantalla de carga cuando la app y las fuentes están listas (mínimo ~1,9 s para que se vea la animación completa)
+  const splash = document.getElementById('splash');
+  if (splash) {
+    const hide = () => { const wait = reduceMotion() ? 0 : Math.max(0, 1900 - (Date.now() - (window.__t0 || 0))); setTimeout(() => { splash.classList.add('done'); setTimeout(() => splash.remove(), 600); }, wait); };
+    (document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]) : Promise.resolve()).then(hide);
+  }
   if ('serviceWorker' in navigator && location.protocol === 'https:' && /github\.io$/.test(location.hostname)) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* sin modo offline */ });
   }

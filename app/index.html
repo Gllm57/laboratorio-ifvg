@@ -437,10 +437,46 @@ button, .btn, a, .opt, .day, .act, .excard { touch-action: manipulation; -webkit
   .sim-ctrl .btn:not(.buy):not(.sell):not(.ghost) { flex: 1 1 28%; padding: 0 8px; font-size: 14px; }
 }
 @media (max-width: 400px) { #hdr-xp { display: none; } .logo b { font-size: 15px; } .sim-stats b { font-size: 13px; } }
+
+/* Pantalla de carga: se oculta sola a los 4 s aunque falle el script */
+#splash { position: fixed; inset: 0; z-index: 50; background: #111214; display: grid; place-items: center; padding: env(safe-area-inset-top, 0px) 16px env(safe-area-inset-bottom, 0px); animation: sp-auto 0.4s 5s forwards; transition: opacity .45s ease, visibility .45s; }
+#splash.done { opacity: 0; visibility: hidden; pointer-events: none; }
+#splash.done .sp-center { transform: scale(1.04); }
+.sp-glow { position: absolute; inset: 0; background: radial-gradient(40% 30% at 30% 40%, rgba(222, 226, 160, .16), transparent 70%), radial-gradient(40% 30% at 72% 62%, rgba(196, 198, 240, .14), transparent 70%); animation: sp-breathe 3s ease-in-out infinite alternate; }
+.sp-center { position: relative; display: grid; justify-items: center; gap: 10px; transition: transform .45s ease; }
+.sp-logo { width: 104px; height: 104px; filter: drop-shadow(0 16px 36px rgba(232, 232, 168, .22)); animation: sp-pop .6s cubic-bezier(.2, .8, .2, 1.2) both; }
+.sp-band { transform-box: fill-box; transform-origin: left center; animation: sp-grow .5s .45s cubic-bezier(.2, .7, .2, 1) both; }
+.sp-c1 { transform-box: fill-box; transform-origin: 50% 100%; animation: sp-rise .5s .25s cubic-bezier(.2, .7, .2, 1) both; }
+.sp-c2 { transform-box: fill-box; transform-origin: 50% 100%; animation: sp-rise .55s .6s cubic-bezier(.2, .8, .2, 1.15) both; }
+.sp-name { margin: 8px 0 0; font: 600 22px var(--f-body); letter-spacing: -0.01em; color: #f2f2f0; animation: rise .5s .7s var(--ease) both; }
+.sp-tag { margin: 0; font: 400 13.5px var(--f-body); color: #a5a6aa; animation: rise .5s .85s var(--ease) both; }
+.sp-bar { position: absolute; left: 50%; bottom: calc(56px + env(safe-area-inset-bottom, 0px)); width: 140px; height: 4px; margin-left: -70px; border-radius: 999px; background: #24252a; overflow: hidden; }
+.sp-bar i { display: block; height: 100%; width: 100%; border-radius: 999px; background: linear-gradient(90deg, #e9e9a9, #d5d6ef); transform-origin: left; animation: sp-load 1.1s .2s cubic-bezier(.4, 0, .2, 1) both; }
+@keyframes sp-pop { from { opacity: 0; transform: scale(.7); } }
+@keyframes sp-rise { from { opacity: 0; transform: scaleY(.1); } }
+@keyframes sp-grow { from { opacity: 0; transform: scaleX(0); } }
+@keyframes sp-load { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes sp-breathe { from { opacity: .6; } to { opacity: 1; } }
+@keyframes sp-auto { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
+<div id="splash" role="status" aria-label="Cargando Laboratorio IFVG">
+  <div class="sp-glow"></div>
+  <div class="sp-center">
+    <svg class="sp-logo" viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="spg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c7cfb2"/><stop offset=".35" stop-color="#e8e8a8"/><stop offset=".7" stop-color="#d6d7ee"/><stop offset="1" stop-color="#c5cdb8"/></linearGradient></defs>
+      <rect class="sp-bg" width="512" height="512" rx="130" fill="url(#spg)"/>
+      <rect class="sp-band" x="104" y="236" width="304" height="52" rx="14" fill="#16171a" opacity=".14"/>
+      <g class="sp-c1"><line x1="182" y1="118" x2="182" y2="392" stroke="#16171a" stroke-width="22" stroke-linecap="round"/><rect x="146" y="150" width="72" height="196" rx="20" fill="url(#spg)" stroke="#16171a" stroke-width="22"/></g>
+      <g class="sp-c2"><line x1="330" y1="92" x2="330" y2="368" stroke="#16171a" stroke-width="22" stroke-linecap="round"/><rect x="294" y="118" width="72" height="210" rx="20" fill="#16171a"/></g>
+    </svg>
+    <p class="sp-name">Laboratorio IFVG</p>
+    <p class="sp-tag">Toma de liquidez · IFVG · Objetivo claro</p>
+  </div>
+  <div class="sp-bar"><i></i></div>
+</div>
+<script>window.__t0 = Date.now();</script>
 
 <header class="top">
   <div class="top-in">
