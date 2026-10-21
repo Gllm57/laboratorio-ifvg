@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Lección · Laboratorio IFVG</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0B1117}
+a{color:#F0B43A}a:hover{color:#FFD27A}
+</style>
+</helmet>
+<div style="min-height: 1240px; background: #0B1117; color: #E6EDF3; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 16px; line-height: 1.6">
+
+  <header style="padding: 16px 32px; background: #0F161E; border-bottom: 1px solid #1F2B38; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px">
+      <a href="Main.dc.html" style="text-decoration: none; color: #9AABBB; font-size: 14px">← Ruta 50 días</a>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9AABBB">Fase 3 · Ejecución y mente</span>
+      <span style="flex: 1"></span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">Día 28 de 50</span>
+    </div>
+    <div aria-label="Progreso de la ruta: 27 de 50 días" style="display: grid; grid-template-columns: repeat(50, minmax(0, 1fr)); gap: 2px">
+      <sc-for list="{{days}}" as="d" hint-placeholder-count="50">
+        <span style="height: 6px; border-radius: 1px; background: {{d.bg}}"></span>
+      </sc-for>
+    </div>
+  </header>
+
+  <div style="max-width: 1240px; margin: 0 auto; padding: 40px 32px 64px; display: flex; flex-wrap: wrap; gap: 40px">
+
+    <article style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column; gap: 32px">
+      <header style="display: flex; flex-direction: column; gap: 14px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #F0B43A">Día 28 · El gatillo de entrada</span>
+        <h1 style="margin: 0; font-family: Archivo, sans-serif; font-stretch: 80%; font-weight: 800; font-size: 60px; line-height: 1">Inverse Fair Value Gap</h1>
+        <p style="margin: 0; font-size: 19px; color: #B4C2CF; max-width: 62ch">Un IFVG es un FVG que el mercado no respeta: una vela cierra al otro lado y lo invalida. Ese cierre es la entrada de la estrategia.</p>
+      </header>
+
+      <section aria-label="Paso a paso" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+        <sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+          <figure style="margin: 0; background: #121A23; border: 1px solid {{s.border}}; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+            <div style="position: relative; height: 170px; display: flex; gap: 3px">
+              <sc-for list="{{s.candles}}" as="c" hint-placeholder-count="16">
+                <div style="position: relative; flex: 1"><div style="{{c.wick}}"></div><div style="{{c.body}}"></div></div>
+              </sc-for>
+              <div style="{{s.box}}"></div>
+              <div style="{{s.dot}}"></div>
+            </div>
+            <figcaption style="display: flex; flex-direction: column; gap: 2px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: {{s.accent}}">{{s.n}}</span><span style="font-weight: 600; font-size: 15px">{{s.title}}</span><span style="font-size: 13.5px; color: #9AABBB; line-height: 1.45">{{s.text}}</span></figcaption>
+          </figure>
+        </sc-for>
+      </section>
+
+      <section style="display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-family: Archivo, sans-serif; font-stretch: 85%; font-size: 26px">Ideas clave</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+          <div style="padding: 14px 16px; border-radius: 8px; background: #121A23; font-size: 15px"><b style="color: #2FC3A0">Compras.</b> FVG bajista + cierre por encima = IFVG alcista.</div>
+          <div style="padding: 14px 16px; border-radius: 8px; background: #121A23; font-size: 15px"><b style="color: #F2695B">Ventas.</b> FVG alcista + cierre por debajo = IFVG bajista.</div>
+          <div style="padding: 14px 16px; border-radius: 8px; background: #121A23; font-size: 15px"><b>Cuenta el cierre,</b> no la mecha.</div>
+          <div style="padding: 14px 16px; border-radius: 8px; background: #121A23; font-size: 15px"><b>Mejor si</b> hay un único FVG en el camino y se invalida con desplazamiento.</div>
+        </div>
+      </section>
+
+      <section aria-label="Control del día" style="background: #121A23; border: 1px solid #1F2B38; border-radius: 10px; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <h2 style="margin: 0; font-family: Archivo, sans-serif; font-stretch: 85%; font-size: 26px">Control del día</h2>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #9AABBB">Pregunta 1 de 2</span>
+        </div>
+        <p style="margin: 0; font-weight: 600; font-size: 17px">Un FVG bajista es invalidado por un cierre por encima. ¿Qué buscas?</p>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{opts}}" as="o" hint-placeholder-count="4">
+            <button type="button" onClick="{{o.pick}}" style="{{o.style}}">{{o.label}}</button>
+          </sc-for>
+        </div>
+        <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}">
+          <div style="{{fbStyle}}"><b>{{fbTitle}}</b> {{fbText}}</div>
+        </sc-if>
+      </section>
+
+      <nav style="display: flex; justify-content: space-between; gap: 12px">
+        <a href="#" style="min-height: 44px; display: inline-flex; align-items: center; padding: 0 16px; border-radius: 6px; border: 1px solid #2A3746; color: #E6EDF3; text-decoration: none; font-weight: 600">← Día 27 · Consejos pre-market</a>
+        <a href="#" style="min-height: 44px; display: inline-flex; align-items: center; padding: 0 16px; border-radius: 6px; background: #E6EDF3; color: #0B1117; text-decoration: none; font-weight: 600">Día 29 · Consejos post-trading →</a>
+      </nav>
+    </article>
+
+    <aside style="flex: 1 1 300px; max-width: 340px; display: flex; flex-direction: column; gap: 14px">
+      <a href="#" style="text-decoration: none; color: #E6EDF3; background: #121A23; border: 1px solid #1F2B38; border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+        <span style="display: flex; align-items: center; justify-content: center; height: 150px; border-radius: 6px; background: #0E151D; border: 1px solid #1F2B38">
+          <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="21" fill="none" stroke="#F0B43A" stroke-width="2"></circle><path d="M18 14l12 8-12 8z" fill="#F0B43A"></path></svg>
+        </span>
+        <span style="font-weight: 600">Video original del día 28</span>
+        <span style="font-size: 13.5px; color: #9AABBB">“Inverse Fair Value Gap | Esses Bootcamp Día 28” · YouTube</span>
+      </a>
+      <section style="background: #1C1810; border: 1px solid #5A4A22; border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #F0B43A">Practica esto</span>
+        <span style="font-family: Archivo, sans-serif; font-stretch: 85%; font-size: 22px; font-weight: 700">Encuentra el IFVG</span>
+        <span style="font-size: 14px; color: #B4C2CF">5 gráficos nuevos. Toca la vela que cierra invalidando el FVG.</span>
+        <a href="#" style="min-height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; background: #F0B43A; color: #1A1300; text-decoration: none; font-weight: 700">Empezar ronda</a>
+      </section>
+      <section style="background: #121A23; border: 1px solid #1F2B38; border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-family: Archivo, sans-serif; font-stretch: 85%; font-size: 20px">Glosario</h2>
+        <sc-for list="{{terms}}" as="t" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; font-size: 14px; line-height: 1.45"><b>{{t.k}}</b><span style="color: #9AABBB">{{t.v}}</span></div>
+        </sc-for>
+      </section>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { pick: null }; }
+  renderVals() {
+    const days = Array.from({ length: 50 }, (_, i) => ({ bg: i < 27 ? '#2FC3A0' : i === 27 ? '#F0B43A' : '#22303F' }));
+    // Velas: FVG bajista, barrido y cierre por encima
+    const C = [[104, 104.6, 103.4, 104.2], [104.2, 104.5, 102.6, 102.9], [102.9, 103.1, 100.2, 100.4], [100.4, 100.7, 98.4, 98.7], [98.7, 99.4, 98.2, 99.1], [99.1, 99.3, 98.0, 98.4], [98.4, 98.9, 97.1, 98.6], [98.6, 100.6, 98.5, 100.3], [100.3, 103.4, 100.2, 103.1], [103.1, 103.9, 102.6, 103.6], [103.6, 104.8, 103.3, 104.5], [104.5, 105.6, 104.2, 105.3]]
+      .map(([o, h, l, c]) => ({ o, h, l, c }));
+    const hi = 106.2, lo = 96.6, Y = (v) => ((hi - v) / (hi - lo) * 100).toFixed(2);
+    const draw = (n) => C.map((b, i) => {
+      if (i >= n) return { wick: 'display: none', body: 'display: none' };
+      const up = b.c >= b.o, col = up ? '#2FC3A0' : '#F2695B';
+      return { wick: 'position: absolute; left: 50%; width: 1px; background: ' + col + '; top: ' + Y(b.h) + '%; bottom: ' + (100 - Y(b.l)) + '%',
+        body: 'position: absolute; left: 14%; right: 14%; top: ' + Y(Math.max(b.o, b.c)) + '%; height: max(1px, ' + Math.abs(Y(b.o) - Y(b.c)).toFixed(2) + '%); background: ' + (up ? '#174A40' : col) + '; border: 1px solid ' + col };
+    });
+    const fvgTop = 102.6, fvgBot = 100.7;
+    const box = (col) => 'position: absolute; left: ' + (1 / 12 * 100).toFixed(1) + '%; right: 0; top: ' + Y(fvgTop) + '%; height: ' + (Y(fvgBot) - Y(fvgTop)).toFixed(2) + '%; background: ' + col + '; border: 1px solid ' + col.replace('0.18', '0.6') + '; pointer-events: none';
+    const steps = [
+      { n: '1', title: 'Se forma un FVG bajista', text: 'Desplazamiento a la baja: las mechas de la vela 1 y la 3 no se tocan.', candles: draw(5), box: box('rgba(242,105,91,0.18)'), dot: 'display: none', border: '#1F2B38', accent: '#F2695B' },
+      { n: '2', title: 'Toma de liquidez', text: 'El precio barre el mínimo y no logra cerrar por debajo.', candles: draw(8), box: box('rgba(242,105,91,0.18)'), dot: 'position: absolute; width: 10px; height: 10px; border-radius: 50%; background: #F0B43A; left: calc(' + (6.5 / 12 * 100).toFixed(1) + '% - 5px); top: calc(' + Y(97.1) + '% + 6px)', border: '#1F2B38', accent: '#F0B43A' },
+      { n: '3', title: 'Cierre por encima = entrada', text: 'La vela cierra sobre el FVG: ahora es un IFVG alcista.', candles: draw(12), box: box('rgba(106,162,255,0.18)'), dot: 'position: absolute; width: 10px; height: 10px; border-radius: 50%; background: #6AA2FF; left: calc(' + (8.5 / 12 * 100).toFixed(1) + '% - 5px); top: calc(' + Y(103.4) + '% - 16px)', border: '#2B4A7A', accent: '#6AA2FF' },
+    ];
+    const labels = ['Ventas', 'Compras', 'Nada', 'Esperar un order block'];
+    const p = this.state.pick;
+    const opts = labels.map((label, k) => {
+      const sel = p === k, good = k === 1;
+      let st = 'min-height: 48px; text-align: left; padding: 0 14px; border-radius: 6px; font: 500 15px IBM Plex Sans, sans-serif; cursor: pointer; ';
+      st += p == null ? 'background: #0E151D; color: #E6EDF3; border: 1px solid #2A3746' : good ? 'background: #123128; color: #E6EDF3; border: 1px solid #2FC3A0' : sel ? 'background: #3A1A17; color: #E6EDF3; border: 1px solid #F2695B' : 'background: #0E151D; color: #8C9DAE; border: 1px solid #22303F';
+      return { label, style: st, pick: () => this.setState({ pick: k }) };
+    });
+    const right = p === 1;
+    return {
+      days, steps, opts, answered: p != null,
+      fbTitle: right ? 'Correcto.' : 'Revisa.',
+      fbText: 'Un FVG bajista invalidado se vuelve IFVG alcista: se buscan compras al cierre de esa vela.',
+      fbStyle: 'padding: 12px 14px; border-radius: 6px; font-size: 15px; ' + (right ? 'background: #123128; border: 1px solid #2FC3A0' : 'background: #3A1A17; border: 1px solid #F2695B'),
+      terms: [{ k: 'FVG', v: 'Vacío entre la vela 1 y la 3 de un desplazamiento.' }, { k: 'IFVG', v: 'FVG invalidado por un cierre al otro lado.' }, { k: 'Toma de liquidez', v: 'Barrido de un máximo o mínimo sin cierre más allá.' }],
+    };
+  }
+}
+</script>
+</body>
+</html>

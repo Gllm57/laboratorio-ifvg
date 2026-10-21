@@ -1,0 +1,29 @@
+# Laboratorio IFVG
+
+App web para aprender trading con la estrategia del **Esses Bootcamp** de Fede Esses: toma de liquidez + IFVG + objetivo claro, en la sesión de Nueva York AM (9:30–11:00) o en la asiática (20:00–21:30).
+
+> Material educativo no oficial. Los gráficos de práctica y del simulador se generan por simulación; no son datos reales del mercado. Operar futuros con apalancamiento implica riesgo de pérdida.
+
+## Qué incluye
+
+- **Ruta de 50 días** en 5 fases, con resumen, diagrama e ideas clave, más un control de 2 preguntas por día.
+- **Estrategia**: los 3 pasos, los horarios, los 3 modelos (manipulación, continuación y retroceso), el plan de trading y un examen final.
+- **Práctica evaluada**: 7 tipos de ejercicio (FVG, toma de liquidez, IFVG, stop, objetivo, modelo y cálculo de contratos).
+- **Simulador** de sesiones de NQ vela a vela, con temporalidades de 1m a 15m y contexto en 1H o 4H. Al final da una nota de disciplina sobre 100.
+- **Diario** con la curva en R y tus notas.
+- **Niveles** del 1 (Novato) al 5 (Experto).
+
+## Cómo usarla
+
+Abre `app/index.html` en el navegador. No necesita servidor ni instalación. El progreso se guarda en el `localStorage` del navegador.
+
+## Estructura
+
+| Archivo | Contenido |
+| --- | --- |
+| `app/engine.js` | Generador de sesiones de 1m, detectores (FVG, IFVG, swings, tomas de liquidez), agregación de temporalidades y evaluación de trades |
+| `app/charts.js` | Gráficos de velas y de líneas en SVG |
+| `app/content.js` | Las 50 lecciones, sus preguntas y el examen |
+| `app/diagrams.js` | Diagramas de cada lección |
+| `app/app.js` | Navegación, progreso, prácticas, simulador y diario |
+| `maqueta/` | Propuesta de rediseño: pantallas de Inicio, Simulador, Lección y Móvil (formato `.dc.html` del lienzo de diseño de Claude) |

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Inicio · Laboratorio IFVG</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0B1117}
+a{color:#F0B43A}a:hover{color:#FFD27A}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1180px; background: #0B1117; color: #E6EDF3; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px">
+
+  <nav aria-label="Secciones" style="flex: 1 1 232px; max-width: 260px; box-sizing: border-box; padding: 24px 16px; background: #0F161E; border-right: 1px solid #1F2B38; display: flex; flex-direction: column; gap: 28px">
+    <a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #E6EDF3">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="4" y="9" width="6" height="13" rx="1" fill="#F2695B"></rect><line x1="7" y1="4" x2="7" y2="26" stroke="#F2695B" stroke-width="2"></line><rect x="18" y="6" width="6" height="15" rx="1" fill="#2FC3A0"></rect><line x1="21" y1="2" x2="21" y2="25" stroke="#2FC3A0" stroke-width="2"></line><rect x="10" y="12" width="8" height="5" fill="#F0B43A" opacity="0.8"></rect></svg>
+      <span style="font-family: Archivo, sans-serif; font-stretch: 80%; font-weight: 800; font-size: 19px; letter-spacing: 0.02em; text-transform: uppercase">Laboratorio IFVG</span>
+    </a>
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <sc-for list="{{nav}}" as="item" hint-placeholder-count="6">
+        <a href="{{item.href}}" style="{{item.style}}">
+          <span style="width: 8px; height: 8px; border-radius: 2px; background: {{item.dot}}"></span>
+          <span style="flex: 1">{{item.label}}</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8C9DAE">{{item.meta}}</span>
+        </a>
+      </sc-for>
+    </div>
+    <div style="margin-top: auto; padding: 16px; border: 1px solid #1F2B38; border-radius: 8px; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #F0B43A">Tu nivel</span>
+      <span style="font-family: Archivo, sans-serif; font-stretch: 85%; font-size: 22px; font-weight: 700">3 · Analista</span>
+      <div style="display: flex; gap: 4px">
+        <span style="flex: 1; height: 6px; border-radius: 3px; background: #F0B43A"></span>
+        <span style="flex: 1; height: 6px; border-radius: 3px; background: #F0B43A"></span>
+        <span style="flex: 1; height: 6px; border-radius: 3px; background: #F0B43A"></span>
+        <span style="flex: 1; height: 6px; border-radius: 3px; background: #2A3746"></span>
+        <span style="flex: 1; height: 6px; border-radius: 3px; background: #2A3746"></span>
+      </div>
+      <span style="font-size: 13px; color: #9AABBB">Para Operador: 7 sesiones más y disciplina media ≥ 75.</span>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 36px 48px; display: flex; flex-direction: column; gap: 24px">
+
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 320px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #9AABBB">Martes 21 oct · datos de ejemplo</span>
+        <h1 style="margin: 0; font-family: Archivo, sans-serif; font-stretch: 82%; font-weight: 800; font-size: 40px; line-height: 1.05">Faltan 2 h 14 min para la apertura</h1>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <span style="display: flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid #3B3220; background: #1C1810; border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #F0B43A"><span style="width: 8px; height: 8px; border-radius: 50%; background: #F0B43A"></span>NY AM 9:30–11:00</span>
+        <span style="padding: 9px 12px; border: 1px solid #1F2B38; border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 13px">Racha 6 días</span>
+        <span style="padding: 9px 12px; border: 1px solid #1F2B38; border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 13px">1.240 XP</span>
+      </div>
+    </header>
+
+    <section aria-label="Plan de hoy" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+      <sc-for list="{{today}}" as="t" hint-placeholder-count="3">
+        <a href="{{t.href}}" style="text-decoration: none; color: #E6EDF3; background: #121A23; border: 1px solid {{t.border}}; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 10px; min-height: 150px; box-sizing: border-box">
+          <span style="display: flex; justify-content: space-between; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: #9AABBB">{{t.step}}<span style="padding: 4px 8px; border-radius: 4px; background: {{t.pillBg}}; color: {{t.pillFg}}; letter-spacing: 0">{{t.status}}</span></span>
+          <span style="font-family: Archivo, sans-serif; font-stretch: 85%; font-size: 22px; font-weight: 700; line-height: 1.15">{{t.title}}</span>
+          <span style="font-size: 14px; color: #9AABBB">{{t.desc}}</span>
+          <span style="margin-top: auto; font-weight: 600; font-size: 14px; color: #F0B43A">{{t.cta}} →</span>
+        </a>
+      </sc-for>
+    </section>
+
+    <section style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+      <div style="grid-column: span 2; background: #121A23; border: 1px solid #1F2B38; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap">
+          <h2 style="margin: 0; font-family: Archivo, sans-serif; font-stretch: 85%; font-size: 22px">Repetición de ayer · Modelo 1</h2>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9AABBB">NQ · 1m · +1,3 R</span>
+        </div>
+        <div style="position: relative; height: 280px; border-radius: 6px; background: #0E151D; overflow: hidden">
+          <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; gap: 2px; padding: 0 8px">
+            <sc-for list="{{candles}}" as="c" hint-placeholder-count="48">
+              <div style="position: relative; flex: 1">
+                <div style="{{c.wick}}"></div>
+                <div style="{{c.body}}"></div>
+              </div>
+            </sc-for>
+          </div>
+          <sc-for list="{{marks}}" as="m" hint-placeholder-count="5">
+            <div style="{{m.style}}"><span style="{{m.labelStyle}}">{{m.label}}</span></div>
+          </sc-for>
+        </div>
+        <p style="margin: 0; font-size: 14px; color: #9AABBB">Barrió el mínimo del pre-market a las 9:36, invalidó el FVG bajista a las 9:39 y llegó al TP en 11 minutos.</p>
+      </div>
+      <div style="background: #121A23; border: 1px solid #1F2B38; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+        <h2 style="margin: 0; font-family: Archivo, sans-serif; font-stretch: 85%; font-size: 22px">Progreso por fase</h2>
+        <sc-for list="{{phases}}" as="p" hint-placeholder-count="5">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="display: flex; justify-content: space-between; font-size: 14px"><span>{{p.name}}</span><span style="font-family: 'IBM Plex Mono', monospace; color: #9AABBB">{{p.done}}</span></span>
+            <span style="height: 6px; border-radius: 3px; background: #22303F; overflow: hidden"><span style="{{p.bar}}"></span></span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+        <div style="background: #121A23; border: 1px solid #1F2B38; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #9AABBB">{{k.label}}</span>
+          <span style="font-family: Archivo, sans-serif; font-size: 34px; font-weight: 700; color: {{k.color}}">{{k.value}}</span>
+          <span style="font-size: 13px; color: #9AABBB">{{k.sub}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section style="background: #121A23; border: 1px solid #1F2B38; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 12px">
+        <h2 style="margin: 0; font-family: Archivo, sans-serif; font-stretch: 85%; font-size: 22px">Disciplina · últimas 8 semanas</h2>
+        <span style="display: flex; gap: 12px; font-size: 12px; color: #9AABBB; align-items: center">
+          <span style="display: flex; gap: 5px; align-items: center"><span style="width: 12px; height: 12px; border-radius: 2px; background: #22303F"></span>Sin sesión</span>
+          <span style="display: flex; gap: 5px; align-items: center"><span style="width: 12px; height: 12px; border-radius: 2px; background: #5A4A22"></span>&lt; 70</span>
+          <span style="display: flex; gap: 5px; align-items: center"><span style="width: 12px; height: 12px; border-radius: 2px; background: #1E7A66"></span>70–84</span>
+          <span style="display: flex; gap: 5px; align-items: center"><span style="width: 12px; height: 12px; border-radius: 2px; background: #2FC3A0"></span>≥ 85</span>
+        </span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(40, minmax(0, 1fr)); gap: 4px">
+        <sc-for list="{{heat}}" as="h" hint-placeholder-count="40">
+          <span style="aspect-ratio: 1; border-radius: 3px; background: {{h.bg}}"></span>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const nav = [
+      ['Inicio', 'Main.dc.html', '', true], ['Ruta 50 días', 'Leccion.dc.html', '22/50'], ['Estrategia', '#', ''],
+      ['Práctica', '#', '78 %'], ['Simulador', 'Simulador.dc.html', ''], ['Diario', '#', '23']
+    ].map(([label, href, meta, on]) => ({ label, href, meta,
+      dot: on ? '#F0B43A' : '#2A3746',
+      style: 'display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 6px; text-decoration: none; font-weight: 500; ' + (on ? 'background: #1A2430; color: #E6EDF3' : 'color: #9AABBB') }));
+    const today = [
+      { step: 'Paso 1 · Lección', status: 'Hecho', title: 'Día 22 · Daily bias', desc: 'Sesgo diario con PDH y PDL. Control aprobado.', cta: 'Repasar', href: 'Leccion.dc.html', ok: true },
+      { step: 'Paso 2 · Práctica', status: '3/5', title: 'Encuentra el IFVG', desc: 'Ronda en curso. Tu mejor marca: 80 %.', cta: 'Continuar ronda', href: '#' },
+      { step: 'Paso 3 · Sesión', status: '9:30', title: 'Sesión NY AM', desc: 'Contexto 4H bajista. Liquidez pendiente: mínimo de ayer.', cta: 'Preparar sesión', href: 'Simulador.dc.html', next: true },
+    ].map((t) => ({ ...t, border: t.next ? '#5A4A22' : '#1F2B38', pillBg: t.ok ? '#123128' : t.next ? '#2A2312' : '#1A2430', pillFg: t.ok ? '#2FC3A0' : t.next ? '#F0B43A' : '#9AABBB' }));
+    const phases = [['Fundamentos', 9, 9], ['Smart Money', 11, 11], ['Ejecución y mente', 2, 10], ['Tu sistema', 0, 9], ['Profesional', 0, 11]]
+      .map(([name, d, t]) => ({ name, done: d + '/' + t, bar: 'display: block; height: 100%; width: ' + Math.round(d / t * 100) + '%; background: ' + (d === t ? '#2FC3A0' : '#F0B43A') }));
+    const kpis = [
+      { label: 'Días completados', value: '22/50', sub: 'Fase 3 · Ejecución y mente', color: '#E6EDF3' },
+      { label: 'Disciplina media', value: '84', sub: 'Últimas 20 sesiones', color: '#2FC3A0' },
+      { label: 'Identificación', value: '78 %', sub: 'FVG, liquidez e IFVG', color: '#E6EDF3' },
+      { label: 'Resultado', value: '+6,4 R', sub: '23 sesiones · 61 % acierto', color: '#2FC3A0' },
+    ];
+    let s = 7; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    const heat = Array.from({ length: 40 }, (_, i) => { const v = r(); const bg = i % 7 > 4 ? '#22303F' : v < 0.15 ? '#22303F' : v < 0.3 ? '#5A4A22' : v < 0.6 ? '#1E7A66' : '#2FC3A0'; return { bg }; });
+    // Velas del ejemplo (Modelo 1): rango, barrido del mínimo, IFVG y expansión
+    const way = [[0, 100], [8, 103.5], [14, 101.2], [20, 103.8], [26, 101.5], [31, 99.2], [33, 97.4], [36, 101.6], [40, 101], [47, 106.6]];
+    const C = []; let p = 100.5;
+    for (let i = 0; i < 48; i++) {
+      let k = 0; while (k < way.length - 2 && way[k + 1][0] < i) k++;
+      const [x0, y0] = way[k], [x1, y1] = way[k + 1];
+      const t = Math.min(1, Math.max(0, (i - x0) / ((x1 - x0) || 1)));
+      const c = y0 + (y1 - y0) * t + (r() - 0.5) * 0.9;
+      const o = p; C.push({ o, c, h: Math.max(o, c) + r() * 0.5, l: Math.min(o, c) - r() * 0.5 }); p = c;
+    }
+    C[33].l = 96.6;
+    const hi = 108, lo = 95.8, Y = (v) => ((hi - v) / (hi - lo) * 100).toFixed(2);
+    const candles = C.map((b) => {
+      const up = b.c >= b.o, col = up ? '#2FC3A0' : '#F2695B';
+      return {
+        wick: 'position: absolute; left: 50%; width: 1px; background: ' + col + '; top: ' + Y(b.h) + '%; bottom: ' + (100 - Y(b.l)) + '%',
+        body: 'position: absolute; left: 14%; right: 14%; border-radius: 1px; top: ' + Y(Math.max(b.o, b.c)) + '%; height: max(1px, ' + Math.abs(Y(b.o) - Y(b.c)).toFixed(2) + '%); background: ' + (up ? '#174A40' : col) + '; border: 1px solid ' + col
+      };
+    });
+    const X = (i) => (8 + i * ((1440 - 16) / 48)) ; // aproximación visual en %
+    const px = (i) => (i / 48 * 100).toFixed(2);
+    const lbl = (c) => 'position: absolute; left: 6px; top: -18px; font: 600 11px IBM Plex Sans, sans-serif; color: ' + c + '; white-space: nowrap';
+    const marks = [
+      { label: 'Mínimo pre-market', style: 'position: absolute; left: 1%; right: 2%; top: ' + Y(98.2) + '%; border-top: 1px dashed #F0B43A', labelStyle: lbl('#F0B43A') },
+      { label: '9:30', style: 'position: absolute; top: 0; bottom: 0; left: ' + px(30) + '%; border-left: 1px dashed #5D6E80', labelStyle: 'position: absolute; left: 6px; bottom: 6px; font: 500 11px IBM Plex Mono, monospace; color: #9AABBB' },
+      { label: 'FVG → IFVG', style: 'position: absolute; left: ' + px(31) + '%; width: 9%; top: ' + Y(100.9) + '%; height: ' + (Y(99.6) - Y(100.9)).toFixed(2) + '%; background: rgba(242,105,91,0.18); border: 1px solid rgba(242,105,91,0.6)', labelStyle: lbl('#F2695B') },
+      { label: 'TP', style: 'position: absolute; left: ' + px(36) + '%; right: 4%; top: ' + Y(105.6) + '%; height: ' + (Y(101.4) - Y(105.6)).toFixed(2) + '%; background: rgba(47,195,160,0.12); border-top: 1px solid #2FC3A0', labelStyle: lbl('#2FC3A0') },
+      { label: 'SL', style: 'position: absolute; left: ' + px(36) + '%; right: 4%; top: ' + Y(101.4) + '%; height: ' + (Y(96.3) - Y(101.4)).toFixed(2) + '%; background: rgba(242,105,91,0.10); border-bottom: 1px solid #F2695B', labelStyle: 'position: absolute; left: 6px; bottom: -18px; font: 600 11px IBM Plex Sans, sans-serif; color: #F2695B' },
+    ];
+    return { nav, today, phases, kpis, heat, candles, marks };
+  }
+}
+</script>
+</body>
+</html>

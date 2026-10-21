@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Simulador · Laboratorio IFVG</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0B1117}
+a{color:#F0B43A}a:hover{color:#FFD27A}
+</style>
+</helmet>
+<div style="min-height: 1000px; background: #0B1117; color: #E6EDF3; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 14px 24px; background: #0F161E; border-bottom: 1px solid #1F2B38">
+    <a href="Main.dc.html" style="text-decoration: none; color: #9AABBB; font-size: 13px">← Inicio</a>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font-family: Archivo, sans-serif; font-stretch: 82%; font-weight: 800; font-size: 22px">Sesión simulada · NQ</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9AABBB">Sesión #24 · datos simulados</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 6px; background: #12261F; border: 1px solid #1E5A4B">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600">9:41</span>
+      <span style="display: flex; flex-direction: column; font-size: 12px; line-height: 1.3"><span style="color: #2FC3A0; font-weight: 600">Ventana abierta</span><span style="color: #9AABBB">Quedan 79 min</span></span>
+    </div>
+    <div role="group" aria-label="Temporalidad" style="display: flex; border: 1px solid #2A3746; border-radius: 6px; overflow: hidden">
+      <sc-for list="{{tfs}}" as="t" hint-placeholder-count="5">
+        <button type="button" onClick="{{t.pick}}" aria-pressed="{{t.on}}" style="{{t.style}}">{{t.label}}</button>
+      </sc-for>
+    </div>
+    <span style="flex: 1"></span>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap">
+      <button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 6px; border: 1px solid #2A3746; background: #121A23; color: #E6EDF3; font: 600 14px 'IBM Plex Sans', sans-serif; display: flex; align-items: center; gap: 8px"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 2l9 5-9 5z" fill="#E6EDF3"></path></svg>Reproducir</button>
+      <button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 6px; border: 1px solid #2A3746; background: #121A23; color: #E6EDF3; font: 600 14px 'IBM Plex Sans', sans-serif">+1 min</button>
+      <button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 6px; border: 1px solid #2A3746; background: #121A23; color: #E6EDF3; font: 600 14px 'IBM Plex Sans', sans-serif">Cerrar vela de {{tfLabel}}</button>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 16px; padding: 16px 24px 24px">
+
+    <aside aria-label="Checklist en vivo" style="flex: 1 1 260px; max-width: 300px; display: flex; flex-direction: column; gap: 12px">
+      <section style="background: #121A23; border: 1px solid #1F2B38; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <h2 style="margin: 0; font-family: Archivo, sans-serif; font-stretch: 85%; font-size: 19px">Checklist en vivo</h2>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #F0B43A">3/6</span>
+        </div>
+        <sc-for list="{{checks}}" as="c" hint-placeholder-count="6">
+          <div style="display: flex; gap: 10px; align-items: flex-start">
+            <span style="{{c.dot}}">{{c.icon}}</span>
+            <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">{{c.label}}</span><span style="font-size: 12.5px; color: #9AABBB">{{c.note}}</span></span>
+          </div>
+        </sc-for>
+      </section>
+      <section style="background: #121A23; border: 1px solid #1F2B38; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <h2 style="margin: 0; font-family: Archivo, sans-serif; font-stretch: 85%; font-size: 19px">Contexto</h2>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; padding: 4px 8px; border-radius: 4px; background: #3A1A17; color: #F2695B">4H bajista</span>
+        </div>
+        <div style="position: relative; height: 90px; display: flex; gap: 3px; padding: 4px 0">
+          <sc-for list="{{htf}}" as="c" hint-placeholder-count="14">
+            <div style="position: relative; flex: 1"><div style="{{c.wick}}"></div><div style="{{c.body}}"></div></div>
+          </sc-for>
+        </div>
+        <sc-for list="{{levels}}" as="l" hint-placeholder-count="4">
+          <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: #9AABBB">{{l.name}}</span><span style="font-family: 'IBM Plex Mono', monospace">{{l.price}}</span></div>
+        </sc-for>
+      </section>
+    </aside>
+
+    <section aria-label="Gráfico" style="flex: 999 1 520px; min-width: 0; background: #0E151D; border: 1px solid #1F2B38; border-radius: 8px; display: flex; flex-direction: column">
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 16px; border-bottom: 1px solid #1F2B38; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: #9AABBB">
+        <span style="color: #E6EDF3; font-weight: 600">NQ · {{tfLabel}}</span><span>A 20.418,25</span><span>Máx 20.431,00</span><span>Mín 20.409,50</span><span style="color: #2FC3A0">C 20.428,75</span>
+        <span style="flex: 1"></span>
+        <span style="display: flex; gap: 12px"><span style="color: #F0B43A">— Liquidez</span><span style="color: #F2695B">▮ FVG</span><span style="color: #6AA2FF">▮ IFVG</span></span>
+      </div>
+      <div style="position: relative; flex: 1; min-height: 560px; margin-right: 72px">
+        <div style="position: absolute; inset: 16px 0 28px 0; display: flex; gap: 2px; padding-left: 10px">
+          <sc-for list="{{candles}}" as="c" hint-placeholder-count="42">
+            <div style="position: relative; flex: 1"><div style="{{c.wick}}"></div><div style="{{c.body}}"></div></div>
+          </sc-for>
+          <div style="flex: 18"></div>
+        </div>
+        <sc-for list="{{marks}}" as="m" hint-placeholder-count="6">
+          <div style="{{m.style}}"><span style="{{m.labelStyle}}">{{m.label}}</span></div>
+        </sc-for>
+        <sc-for list="{{axis}}" as="a" hint-placeholder-count="6">
+          <span style="{{a.style}}">{{a.label}}</span>
+        </sc-for>
+        <div style="position: absolute; right: -72px; top: 46%; padding: 3px 6px; border-radius: 3px; background: #2FC3A0; color: #0B1117; font: 600 11.5px 'IBM Plex Mono', monospace">20.428,75</div>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 6px 82px 10px 16px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #8C9DAE"><span>9:00</span><span>9:15</span><span>9:30</span><span>9:45</span><span>10:00</span><span>10:15</span><span>10:30</span><span>10:45</span><span>11:00</span></div>
+    </section>
+
+    <aside aria-label="Orden" style="flex: 1 1 280px; max-width: 320px; display: flex; flex-direction: column; gap: 12px">
+      <form style="background: #121A23; border: 1px solid #1E5A4B; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+          <button type="button" style="min-height: 44px; border-radius: 6px; border: 0; background: #2FC3A0; color: #0B1117; font: 700 15px 'IBM Plex Sans', sans-serif">Comprar</button>
+          <button type="button" style="min-height: 44px; border-radius: 6px; border: 1px solid #2A3746; background: transparent; color: #F2695B; font: 700 15px 'IBM Plex Sans', sans-serif">Vender</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <sc-for list="{{fields}}" as="f" hint-placeholder-count="3">
+            <label style="display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; color: #9AABBB">{{f.label}}<input type="text" value="{{f.value}}" aria-label="{{f.label}}" style="{{f.style}}"></label>
+          </sc-for>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="display: flex; justify-content: space-between; font-size: 13px; color: #9AABBB"><span>Riesgo</span><span style="font-family: 'IBM Plex Mono', monospace; color: #E6EDF3">0,50 %</span></span>
+          <input type="range" min="0.1" max="1.5" step="0.05" value="0.5" aria-label="Riesgo por trade" style="width: 100%; accent-color: #F0B43A">
+          <span style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8C9DAE"><span>0,1</span><span style="color: #F0B43A">plan 0,5–0,7</span><span>1,5</span></span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 13px; color: #9AABBB">Relación riesgo/beneficio</span>
+          <div style="display: flex; height: 26px; border-radius: 4px; overflow: hidden; font: 600 12px 'IBM Plex Mono', monospace">
+            <span style="flex: 10; background: #3A1A17; color: #F2695B; display: flex; align-items: center; padding-left: 8px">1 R</span>
+            <span style="flex: 16; background: #123128; color: #2FC3A0; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px">1,6 R</span>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; font-size: 13px">
+          <span style="display: flex; flex-direction: column; padding: 10px; border-radius: 6px; background: #0E151D"><span style="color: #9AABBB">Contratos</span><b style="font: 600 18px 'IBM Plex Mono', monospace">6 MNQ</b></span>
+          <span style="display: flex; flex-direction: column; padding: 10px; border-radius: 6px; background: #0E151D"><span style="color: #9AABBB">Riesgo real</span><b style="font: 600 18px 'IBM Plex Mono', monospace">246 $</b></span>
+        </div>
+        <button type="submit" style="min-height: 48px; border-radius: 6px; border: 0; background: #F0B43A; color: #1A1300; font: 700 15px 'IBM Plex Sans', sans-serif">Confirmar compra</button>
+        <span style="font-size: 12px; color: #9AABBB">Arrastra las líneas SL y TP en el gráfico para ajustarlas.</span>
+      </form>
+      <section style="background: #121A23; border: 1px solid #1F2B38; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-family: Archivo, sans-serif; font-stretch: 85%; font-size: 19px">Plan del día</h2>
+        <span style="font-size: 13px; color: #9AABBB">1 trade por sesión · TP o SL y te vas · break even en el primer máximo intermedio.</span>
+      </section>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { tf: 1 }; }
+  renderVals() {
+    const tfs = [1, 2, 3, 5, 15].map((t) => {
+      const on = this.state.tf === t;
+      return { label: t + 'm', on: on ? 'true' : 'false', pick: () => this.setState({ tf: t }),
+        style: 'min-width: 44px; min-height: 40px; border: 0; border-right: 1px solid #2A3746; font: 600 13px IBM Plex Mono, monospace; cursor: pointer; ' + (on ? 'background: #E6EDF3; color: #0B1117' : 'background: #121A23; color: #9AABBB') };
+    });
+    const ok = 'width: 22px; height: 22px; flex: none; border-radius: 50%; display: grid; place-items: center; font: 700 12px IBM Plex Sans, sans-serif; ';
+    const checks = [
+      ['done', 'Horario operativo', 'Dentro de 9:30–11:00'],
+      ['done', 'Toma de liquidez', '9:36 barrió el mínimo pre-market'],
+      ['wait', 'IFVG', 'Esperando el cierre sobre 20.424,50'],
+      ['done', 'Objetivo claro', 'Máximo pre-market · R:R 1:1,6'],
+      ['todo', 'Riesgo 0,5–0,7 %', 'Se define en la orden'],
+      ['todo', 'Un trade por sesión', '0 de 1 usados'],
+    ].map(([s, label, note]) => ({ label, note,
+      icon: s === 'done' ? '✓' : s === 'wait' ? '…' : '',
+      dot: ok + (s === 'done' ? 'background: #2FC3A0; color: #0B1117' : s === 'wait' ? 'background: #2A2312; color: #F0B43A; border: 1px solid #F0B43A' : 'border: 1px solid #3A4A5B') }));
+    const fields = [['Entrada', '20.428,75', '#E6EDF3'], ['Stop loss', '20.408,25', '#F2695B'], ['Take profit', '20.461,50', '#2FC3A0']]
+      .map(([label, value, c]) => ({ label, value, style: 'width: 130px; min-height: 40px; box-sizing: border-box; padding: 0 10px; border-radius: 6px; border: 1px solid #2A3746; background: #0E151D; color: ' + c + '; font: 600 14px IBM Plex Mono, monospace; text-align: right' }));
+    const levels = [['Máximo pre-market', '20.461,50'], ['Mínimo pre-market', '20.412,00'], ['PDH', '20.522,75'], ['PDL', '20.371,25']].map(([name, price]) => ({ name, price }));
+
+    let s = 11; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    const build = (way, n, noise, wick) => {
+      const C = []; let p = way[0][1];
+      for (let i = 0; i < n; i++) {
+        let k = 0; while (k < way.length - 2 && way[k + 1][0] < i) k++;
+        const [x0, y0] = way[k], [x1, y1] = way[k + 1];
+        const t = Math.min(1, Math.max(0, (i - x0) / ((x1 - x0) || 1)));
+        const c = y0 + (y1 - y0) * t + (r() - 0.5) * noise;
+        const o = p; C.push({ o, c, h: Math.max(o, c) + r() * wick, l: Math.min(o, c) - r() * wick }); p = c;
+      }
+      return C;
+    };
+    const draw = (C, hi, lo) => {
+      const Y = (v) => ((hi - v) / (hi - lo) * 100).toFixed(2);
+      return C.map((b) => {
+        const up = b.c >= b.o, col = up ? '#2FC3A0' : '#F2695B';
+        return { wick: 'position: absolute; left: 50%; width: 1px; background: ' + col + '; top: ' + Y(b.h) + '%; bottom: ' + (100 - Y(b.l)) + '%',
+          body: 'position: absolute; left: 16%; right: 16%; top: ' + Y(Math.max(b.o, b.c)) + '%; height: max(1px, ' + Math.abs(Y(b.o) - Y(b.c)).toFixed(2) + '%); background: ' + (up ? '#174A40' : col) + '; border: 1px solid ' + col };
+      });
+    };
+    const tf = this.state.tf;
+    const base = build([[0, 102], [7, 106.5], [13, 103.4], [19, 106], [25, 101.6], [29, 104], [33, 100.8], [36, 98.6], [38, 102.8], [41, 104.2]], 42, 0.9, 0.6);
+    base[36].l = 97.6;
+    const C = [];
+    for (let i = 0; i < base.length; i += tf) {
+      const g = base.slice(i, i + tf);
+      C.push({ o: g[0].o, c: g[g.length - 1].c, h: Math.max(...g.map((x) => x.h)), l: Math.min(...g.map((x) => x.l)) });
+    }
+    const hi = 108.5, lo = 96.5;
+    const candles = draw(C, hi, lo);
+    const Yp = (v) => (16 + (hi - v) / (hi - lo) * (560 - 44)).toFixed(0);
+    const pct = (i) => (10 + i / (42 + 18) * 100).toFixed(2);
+    const lbl = (c) => 'position: absolute; left: 6px; top: -18px; font: 600 11.5px IBM Plex Sans, sans-serif; color: ' + c + '; white-space: nowrap';
+    const marks = [
+      { label: 'Máximo pre-market · objetivo', style: 'position: absolute; left: 0; right: 0; top: ' + Yp(106.7) + 'px; border-top: 1px dashed #F0B43A', labelStyle: lbl('#F0B43A') },
+      { label: 'Mínimo pre-market', style: 'position: absolute; left: 0; right: 0; top: ' + Yp(98.3) + 'px; border-top: 1px dashed #F0B43A', labelStyle: 'position: absolute; left: 6px; top: 4px; font: 600 11.5px IBM Plex Sans, sans-serif; color: #F0B43A' },
+      { label: '9:30', style: 'position: absolute; top: 16px; bottom: 28px; left: ' + pct(30) + '%; border-left: 1px dashed #5D6E80', labelStyle: 'position: absolute; left: 6px; bottom: 4px; font: 500 11.5px IBM Plex Mono, monospace; color: #9AABBB' },
+      { label: 'FVG bajista', style: 'position: absolute; left: ' + pct(33) + '%; right: 0; top: ' + Yp(101.9) + 'px; height: ' + (Yp(100.6) - Yp(101.9)) + 'px; background: rgba(242,105,91,0.16); border: 1px solid rgba(242,105,91,0.55)', labelStyle: lbl('#F2695B') },
+      { label: 'Toma de liquidez', style: 'position: absolute; left: calc(' + pct(36) + '% - 6px); top: ' + (+Yp(97.6) + 8) + 'px; width: 10px; height: 10px; border-radius: 50%; background: #F0B43A', labelStyle: 'position: absolute; left: 16px; top: -3px; font: 600 11.5px IBM Plex Sans, sans-serif; color: #F0B43A; white-space: nowrap' },
+      { label: 'TP 20.461,50', style: 'position: absolute; left: ' + pct(41) + '%; right: 0; top: ' + Yp(106.7) + 'px; height: ' + (Yp(104.2) - Yp(106.7)) + 'px; background: rgba(47,195,160,0.12); border-top: 2px solid #2FC3A0', labelStyle: 'position: absolute; right: 8px; top: 4px; font: 600 11.5px IBM Plex Mono, monospace; color: #2FC3A0' },
+      { label: 'SL 20.408,25', style: 'position: absolute; left: ' + pct(41) + '%; right: 0; top: ' + Yp(104.2) + 'px; height: ' + (Yp(97.3) - Yp(104.2)) + 'px; background: rgba(242,105,91,0.08); border-bottom: 2px solid #F2695B', labelStyle: 'position: absolute; right: 8px; bottom: 4px; font: 600 11.5px IBM Plex Mono, monospace; color: #F2695B' },
+    ];
+    const axis = [107, 105, 103, 101, 99, 97].map((v, k) => ({ label: '20.' + (470 - k * 20) + ',00', style: 'position: absolute; right: -66px; top: ' + (Yp(v) - 7) + 'px; font: 500 11.5px IBM Plex Mono, monospace; color: #8C9DAE' }));
+    const H = build([[0, 110], [4, 106], [6, 108], [10, 102], [12, 104], [14, 99]], 15, 1.2, 0.8);
+    const htf = draw(H, 112, 97);
+    return { tfs, tfLabel: tf + 'm', checks, fields, levels, candles, marks, axis, htf };
+  }
+}
+</script>
+</body>
+</html>
