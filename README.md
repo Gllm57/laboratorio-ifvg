@@ -32,6 +32,7 @@ En el teléfono, abre el enlace y usa *Añadir a pantalla de inicio*: la app se 
 | `app/content.js` | Las 50 lecciones, sus preguntas y el examen |
 | `app/teoria1.js` … `teoria3.js` | Teoría ampliada de cada día: secciones, errores comunes y ejemplos |
 | `app/sw.js`, `app/manifest.webmanifest` | Instalación en el teléfono y modo sin conexión |
+| `app/icon.svg` y `app/*.png` | Logo de la app e iconos para iPhone y Android |
 | `app/diagrams.js` | Diagramas de cada lección |
 | `app/app.js` | Navegación, progreso, prácticas, simulador y diario |
 | `maqueta/` | Propuesta de rediseño: pantallas de Inicio, Simulador, Lección y Móvil (formato `.dc.html` del lienzo de diseño de Claude) |

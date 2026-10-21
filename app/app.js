@@ -98,7 +98,7 @@
     document.body.classList.add('onb');
     const sl = SLIDES[slide], last = slide === SLIDES.length - 1;
     const el = H(`<section class="welcome">
-      <div class="w-top"><button class="link" type="button" id="w-skip">Saltar ›</button></div>
+      <div class="w-top"><span class="w-brand"><svg viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="lgw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c7cfb2"/><stop offset=".35" stop-color="#e8e8a8"/><stop offset=".7" stop-color="#d6d7ee"/><stop offset="1" stop-color="#c5cdb8"/></linearGradient></defs><rect width="512" height="512" rx="130" fill="url(#lgw)"/><rect x="104" y="236" width="304" height="52" rx="14" fill="#16171a" opacity=".14"/><line x1="182" y1="118" x2="182" y2="392" stroke="#16171a" stroke-width="22" stroke-linecap="round"/><rect x="146" y="150" width="72" height="196" rx="20" fill="url(#lgw)" stroke="#16171a" stroke-width="22"/><line x1="330" y1="92" x2="330" y2="368" stroke="#16171a" stroke-width="22" stroke-linecap="round"/><rect x="294" y="118" width="72" height="210" rx="20" fill="#16171a"/></svg>Laboratorio IFVG</span><button class="link" type="button" id="w-skip">Saltar ›</button></div>
       <div class="w-vis" id="w-vis"></div>
       <div class="w-txt"><h1>${sl.t}</h1><p class="lead">${sl.d}</p>
         <div class="dots" aria-label="Paso ${slide + 1} de ${SLIDES.length}">${SLIDES.map((_, i) => `<span class="${i === slide ? 'on' : ''}"></span>`).join('')}</div>
