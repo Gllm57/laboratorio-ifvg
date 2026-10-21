@@ -6,6 +6,7 @@ App web para aprender trading con la estrategia del **Esses Bootcamp** de Fede E
 
 ## Qué incluye
 
+- **Bienvenida** en 3 pasos la primera vez que abres la app.
 - **Ruta de 50 días** en 5 fases, con resumen, diagrama e ideas clave, más un control de 2 preguntas por día.
 - **Estrategia**: los 3 pasos, los horarios, los 3 modelos (manipulación, continuación y retroceso), el plan de trading y un examen final.
 - **Práctica evaluada**: 7 tipos de ejercicio (FVG, toma de liquidez, IFVG, stop, objetivo, modelo y cálculo de contratos).

@@ -87,11 +87,13 @@
       }
     }
     for (let i = 0; i < n; i++) {
-      const b = C[i], up = b.c >= b.o, col = up ? 'var(--bull)' : 'var(--bear)';
+      const b = C[i], up = b.c >= b.o, col = up ? 'var(--c-up)' : 'var(--c-down)';
       const dim = o.dimFrom != null && i >= o.dimFrom ? ';opacity:.35' : '';
-      s('line', { x1: x(i), x2: x(i), y1: y(b.h), y2: y(b.l), style: `stroke:${col};stroke-width:1${dim}` }, body);
+      // con o.animate cada vela aparece en secuencia (solo en diagramas, no en el simulador)
+      const g = o.animate ? s('g', { class: 'cdl', style: `animation-delay:${Math.min(i * 14, 900)}ms` }, body) : body;
+      s('line', { x1: x(i), x2: x(i), y1: y(b.h), y2: y(b.l), style: `stroke:${col};stroke-width:1.2;stroke-linecap:round${dim}` }, g);
       const top = y(Math.max(b.o, b.c)), hgt = Math.max(1, Math.abs(y(b.o) - y(b.c)));
-      s('rect', { x: x(i) - bw * 0.36, y: top, width: Math.max(1, bw * 0.72), height: hgt, style: `fill:${up ? 'var(--bull-body)' : col};stroke:${col};stroke-width:1${dim}` }, body);
+      s('rect', { x: x(i) - bw * 0.36, y: top, width: Math.max(1, bw * 0.72), height: hgt, rx: Math.min(2, bw * 0.12), style: `fill:${up ? 'var(--c-up-body)' : 'var(--c-down-body)'};stroke:${col};stroke-width:1.2${dim}` }, g);
     }
     for (const a of ann) {
       const c = C_[a.c] || C_.acc;
@@ -164,7 +166,7 @@
       const c = C_[se.c] || se.c;
       const d = se.v.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
       if (se.area) s('path', { d: `${d}L${x(se.v.length - 1)},${y(lo)}L${x(0)},${y(lo)}Z`, style: `fill:${c};opacity:.08` }, svg);
-      s('path', { d, style: `fill:none;stroke:${c};stroke-width:${se.w || 2};${se.dash ? 'stroke-dasharray:6 4' : ''}` }, svg);
+      s('path', se.dash ? { d, style: `fill:none;stroke:${c};stroke-width:${se.w || 2};stroke-dasharray:6 4` } : { d, pathLength: 1, class: 'ln', style: `fill:none;stroke:${c};stroke-width:${se.w || 2};stroke-linecap:round;stroke-linejoin:round` }, svg);
       const li = se.v.length - 1;
       s('circle', { cx: x(li), cy: y(se.v[li]), r: 3.5, style: `fill:${c}` }, svg);
       if (se.label) s('text', { x: x(li) - 4, y: y(se.v[li]) - 8, class: 'lbl', 'text-anchor': 'end', style: `fill:${c}`, text: se.label }, svg);
@@ -243,5 +245,6 @@
     return bar;
   }
 
-  window.CH = { mapAnn, tfBar, candles, lines, script, findSession, setupAnn, s };
+  const candlesA = (host, C, o = {}) => candles(host, C, { animate: true, ...o });
+  window.CH = { candlesA, mapAnn, tfBar, candles, lines, script, findSession, setupAnn, s };
 })();

@@ -27,7 +27,7 @@
     const c = box(host);
     const draw = (tf) => {
       const A = E.agg(S.C, tf, end - 1), a0 = Math.floor(a / tf);
-      CH.candles(c, A.slice(a0), { ann: shiftAnn(CH.mapAnn(ann, tf), a0), times: true, t0: a0 * tf, tf, h: opts.h || 300, label: `Ejemplo del modelo ${model} en ${tf} minutos` });
+      CH.candlesA(c, A.slice(a0), { ann: shiftAnn(CH.mapAnn(ann, tf), a0), times: true, t0: a0 * tf, tf, h: opts.h || 300, label: `Ejemplo del modelo ${model} en ${tf} minutos` });
     };
     CH.tfBar(head, [1, 3, 5, 15], 1, draw);
     draw(1);
@@ -57,14 +57,14 @@
     const { S, f } = F; const { ann } = CH.setupAnn(S.C, f);
     ann.push({ k: 'shade', i0: E.OPEN, i1: f.t, c: 'mute', t: 'Esperar…' });
     const a = 15, c = box(host);
-    CH.candles(c, crop(S.C, a, Math.min(S.C.length, f.t + 18)), { ann: shiftAnn(ann, a), times: true, t0: a, h: 280 });
+    CH.candlesA(c, crop(S.C, a, Math.min(S.C.length, f.t + 18)), { ann: shiftAnn(ann, a), times: true, t0: a, h: 280 });
     cap(host, `Desde las 9:30 hasta las ${E.hhmm(f.t)} no había entrada. La paciencia es esperar que se cumplan los 3 pasos.`);
   };
   DG.notrade = (host) => {
     const F = CH.findSession('none', 'none', (S, f) => !f);
     if (!F) return;
     const { S } = F; const c = box(host);
-    CH.candles(c, S.C.slice(0, E.WIN_END + 2), { ann: [{ k: 'v', i: E.OPEN, c: 'mute', t: '9:30' }, { k: 'shade', i0: E.OPEN, i1: E.WIN_END, c: 'mute', t: 'Sin toma de liquidez ni desplazamiento: no se opera' }], times: true, h: 260 });
+    CH.candlesA(c, S.C.slice(0, E.WIN_END + 2), { ann: [{ k: 'v', i: E.OPEN, c: 'mute', t: '9:30' }, { k: 'shade', i0: E.OPEN, i1: E.WIN_END, c: 'mute', t: 'Sin toma de liquidez ni desplazamiento: no se opera' }], times: true, h: 260 });
     cap(host, 'Día sin condiciones. Cerrar los gráficos sin operar también es cumplir el plan.');
   };
   DG.premarket = (host) => {
@@ -81,7 +81,7 @@
       ...fv.map((x) => ({ k: 'box', i0: x.i - 1, i1: E.OPEN + 6, p0: x.bot, p1: x.top, c: x.dir > 0 ? 'bull' : 'bear', t: 'FVG' })),
     ];
     const c = box(host);
-    CH.candles(c, S.C, { n: E.OPEN, slots: E.OPEN + 6, ann, times: true, h: 260 });
+    CH.candlesA(c, S.C, { n: E.OPEN, slots: E.OPEN + 6, ann, times: true, h: 260 });
     cap(host, 'Antes de la apertura: liquidez del pre-market, FVG relevantes, sesgo y calendario.');
   };
   DG.quarters = (host) => {
@@ -89,35 +89,35 @@
     const { S } = F; const q = 22;
     const ann = [0, 1, 2, 3].map((k) => ({ k: 'shade', i0: E.OPEN + k * q, i1: E.OPEN + (k + 1) * q - 1, c: ['mute', 'acc', 'info', 'mute'][k], t: ['Q1 acumulación', 'Q2 manipulación', 'Q3 distribución', 'Q4 cont./reversión'][k] }));
     const c = box(host);
-    CH.candles(c, S.C.slice(E.OPEN - 2, E.WIN_END), { ann: shiftAnn(ann, E.OPEN - 2), times: true, t0: E.OPEN - 2, h: 260 });
+    CH.candlesA(c, S.C.slice(E.OPEN - 2, E.WIN_END), { ann: shiftAnn(ann, E.OPEN - 2), times: true, t0: E.OPEN - 2, h: 260 });
     cap(host, 'Esquema didáctico: la ventana de 90 minutos dividida en cuartos.');
   };
   DG.topdown = (host) => {
     const g = box(host, 'dg-grid3');
     const S = E.genSession(77, 'm1');
     const tf = [['1H · dirección', E.genHTF(5, S.bias).C], ['15m · puntos de interés', E.genHTF(9, S.bias).C.slice(10)], ['1m · toma de liquidez + IFVG', S.C.slice(20, 60)]];
-    tf.forEach(([t, C]) => { const cell = document.createElement('div'); g.appendChild(cell); cell.appendChild(h(`<p class="dg-tag">${t}</p>`)); const c = box(cell); CH.candles(c, C, { h: 180, axis: false }); });
+    tf.forEach(([t, C]) => { const cell = document.createElement('div'); g.appendChild(cell); cell.appendChild(h(`<p class="dg-tag">${t}</p>`)); const c = box(cell); CH.candlesA(c, C, { h: 180, axis: false }); });
     cap(host, 'De lo grande a lo pequeño: la temporalidad mayor da la dirección y la de 1m da la entrada.');
   };
 
   // --- Conceptos con escenarios guionados ---
   DG.trend = (host) => {
     const { C, ann } = CH.script(3, 100, 1.4, [['d', 4, 106, 0.3], ['d', 3, 103, 0.3, 'HL'], ['d', 4, 110, 0.3, 'HH'], ['d', 3, 106.5, 0.3, 'HL'], ['d', 4, 114, 0.3, 'HH'], ['d', 3, 110, 0.3, 'HL'], ['d', 4, 118, 0.3, 'HH'], ['d', 3, 112, 0.3, 'LH ?'], ['d', 4, 106, 0.3, 'LL'], ['d', 3, 109, 0.3, 'LH'], ['d', 4, 102, 0.3, 'LL']]);
-    CH.candles(box(host), C, { ann, h: 260, dec: 0 });
+    CH.candlesA(box(host), C, { ann, h: 260, dec: 0 });
     cap(host, 'Alcista: HH y HL. Bajista: LH y LL. El cambio aparece cuando se pierde el último HL.');
   };
   DG.bos = (host) => {
     const { C, ann } = CH.script(8, 100, 1.4, [['d', 4, 107, 0.3], ['d', 3, 103, 0.3, 'HL'], ['d', 4, 112, 0.3, 'HH'], ['d', 3, 107, 0.3, 'Último HL'], ['d', 4, 113.5, 0.3, 'LH'], ['i', 3, 101], ['d', 4, 103, 0.3]]);
     const hl = Math.min(...C.slice(12, 16).map((b) => b.l));
     ann.push({ k: 'h', p: hl, i0: 13, i1: C.length, c: 'bear', t: 'Cierre por debajo = quiebre (BOS)', below: true });
-    CH.candles(box(host), C, { ann, h: 260, dec: 0 });
+    CH.candlesA(box(host), C, { ann, h: 260, dec: 0 });
     cap(host, 'El quiebre se confirma con el CIERRE de la vela, no con la mecha.');
   };
   DG.liquidity = (host) => {
     const { C, ann } = CH.script(12, 100, 1.2, [['d', 4, 109.5, 0.3], ['d', 3, 104, 0.3], ['d', 4, 109.6, 0.3], ['d', 3, 103.5, 0.3], ['d', 4, 109.4, 0.3], ['d', 3, 103.8, 0.3], ['d', 3, 106, 0.3]]);
     const hi = Math.max(...C.map((b) => b.h)), lo = Math.min(...C.map((b) => b.l));
     ann.push({ k: 'h', p: hi + 0.3, c: 'bear', t: 'Buy-side: stops de los vendedores' }, { k: 'h', p: lo - 0.3, c: 'bull', t: 'Sell-side: stops de los compradores', below: true });
-    CH.candles(box(host), C, { ann, h: 240, dec: 0 });
+    CH.candlesA(box(host), C, { ann, h: 240, dec: 0 });
     cap(host, 'Máximos y mínimos iguales acumulan órdenes. El precio los busca.');
   };
   DG.sweep = (host) => {
@@ -125,7 +125,7 @@
     const low = Math.min(...C.slice(5, 9).map((b) => b.l));
     const j = 13;
     const ann = [{ k: 'h', p: low, i0: 5, i1: C.length, c: 'acc', t: 'Mínimo (liquidez)', below: true }, { k: 'mark', i: j, pos: 'below', c: 'acc', t: 'Barre y cierra arriba' }];
-    CH.candles(box(host), C, { ann, h: 250, dec: 0 });
+    CH.candlesA(box(host), C, { ann, h: 250, dec: 0 });
     cap(host, 'Falla de desplazamiento: supera el mínimo, activa los stops y no logra cerrar por debajo.');
   };
   DG.fvg = (host) => {
@@ -135,7 +135,7 @@
       { k: 'box', i0: f.i - 1, i1: C.length, p0: f.bot, p1: f.top, c: 'bull', t: 'FVG alcista (vacío)' },
       { k: 'num', i: f.i - 1, p: C[f.i - 1].l - 0.9, t: '1', c: 'ink' }, { k: 'num', i: f.i, p: C[f.i].l - 0.9, t: '2', c: 'ink' }, { k: 'num', i: f.i + 1, p: C[f.i + 1].l - 0.9, t: '3', c: 'ink' },
     ] : [];
-    CH.candles(box(host), C, { ann, h: 250, dec: 0 });
+    CH.candlesA(box(host), C, { ann, h: 250, dec: 0 });
     cap(host, 'El mínimo de la vela 3 no toca el máximo de la vela 1: ese hueco es el Fair Value Gap.');
   };
   DG.ifvg = (host) => {
@@ -145,19 +145,19 @@
       { k: 'box', i0: iv.fvg.i - 1, i1: C.length, p0: iv.fvg.bot, p1: iv.fvg.top, c: 'bear', t: 'FVG bajista' },
       { k: 'mark', i: iv.t, pos: 'above', c: 'info', t: 'Cierra arriba = IFVG alcista', anchor: 'end' },
     ] : [];
-    CH.candles(box(host), C, { ann, h: 260, dec: 0 });
+    CH.candlesA(box(host), C, { ann, h: 260, dec: 0 });
     cap(host, 'El mercado no respeta el FVG bajista y una vela cierra por encima. Ese cierre es la entrada en compras.');
   };
   DG.ob = (host) => {
     const { C } = CH.script(51, 100, 1.2, [['d', 4, 102, 0.4], ['d', 2, 100, 0.2], ['bar', 0, [100, 100.4, 98.2, 98.6]], ['i', 4, 108], ['d', 4, 109, 0.4]]);
     const k = 6, b = C[k];
-    CH.candles(box(host), C, { ann: [{ k: 'box', i0: k, i1: C.length, p0: b.l, p1: b.h, c: 'bull', t: 'Order block alcista' }], h: 240, dec: 0 });
+    CH.candlesA(box(host), C, { ann: [{ k: 'box', i0: k, i1: C.length, p0: b.l, p1: b.h, c: 'bull', t: 'Order block alcista' }], h: 240, dec: 0 });
     cap(host, 'Última vela bajista antes del desplazamiento alcista.');
   };
   DG.equilibrium = (host) => {
     const { C } = CH.script(61, 100, 1.3, [['d', 3, 101, 0.4], ['i', 5, 118], ['d', 3, 120, 0.4], ['d', 6, 111, 0.5]]);
     const hi = Math.max(...C.map((b) => b.h)), lo = Math.min(...C.map((b) => b.l)), mid = (hi + lo) / 2;
-    CH.candles(box(host), C, { ann: [
+    CH.candlesA(box(host), C, { ann: [
       { k: 'box', i0: 0, i1: C.length, p0: mid, p1: hi, c: 'bear', op: 0.08, t: 'Premium (vender)' },
       { k: 'box', i0: 0, i1: C.length, p0: lo, p1: mid, c: 'bull', op: 0.08, t: 'Descuento (comprar)' },
       { k: 'h', p: mid, c: 'acc', t: 'Equilibrio 50 %', dash: true },
@@ -166,23 +166,23 @@
   };
   DG.cisd = (host) => {
     const { C } = CH.script(71, 100, 1.2, [['d', 3, 101, 0.4], ['bar', 0, [101, 101.3, 99.6, 99.8]], ['bar', 0, [99.8, 100, 98.4, 98.6]], ['bar', 0, [98.6, 98.8, 97.1, 97.4]], ['bar', 0, [97.4, 97.6, 95.8, 96.6]], ['bar', 0, [96.6, 98.2, 96.4, 98]], ['i', 2, 102.5], ['d', 3, 103.5, 0.4]]);
-    CH.candles(box(host), C, { ann: [{ k: 'h', p: 101, i0: 3, i1: C.length, c: 'info', t: 'Apertura de la serie bajista' }, { k: 'mark', i: 9, pos: 'above', c: 'info', t: 'CISD: cierra por encima' }], h: 240, dec: 1 });
+    CH.candlesA(box(host), C, { ann: [{ k: 'h', p: 101, i0: 3, i1: C.length, c: 'info', t: 'Apertura de la serie bajista' }, { k: 'mark', i: 9, pos: 'above', c: 'info', t: 'CISD: cierra por encima' }], h: 240, dec: 1 });
     cap(host, 'Cambio en la entrega del precio: el cierre supera la apertura de las velas que hicieron la manipulación.');
   };
   DG.structure = (host) => {
     const { C, ann } = CH.script(81, 100, 1.1, [['d', 3, 104, 0.3], ['d', 2, 102.5, 0.3, 'int'], ['d', 3, 108, 0.3], ['d', 3, 101, 0.3, 'Mínimo externo'], ['d', 3, 105, 0.3], ['d', 2, 103.5, 0.3, 'int'], ['d', 3, 109, 0.3], ['d', 2, 107.5, 0.3, 'int'], ['d', 3, 114, 0.3, 'Máximo externo'], ['d', 3, 110, 0.3, 'int']]);
-    CH.candles(box(host), C, { ann, h: 250, dec: 0 });
+    CH.candlesA(box(host), C, { ann, h: 250, dec: 0 });
     cap(host, 'Externa: los giros principales. Interna (int): los pequeños giros dentro de cada tramo.');
   };
   DG.dailybias = (host) => {
     const { C } = CH.script(91, 100, 3, [['d', 3, 110, 0.6], ['d', 2, 104, 0.6], ['d', 3, 118, 0.6], ['d', 2, 113, 0.6], ['d', 2, 121, 0.6]]);
     const prev = C[C.length - 2];
-    CH.candles(box(host), C, { slots: C.length + 3, ann: [{ k: 'h', p: prev.h, i0: C.length - 2, i1: C.length + 3, c: 'bull', t: 'PDH' }, { k: 'h', p: prev.l, i0: C.length - 2, i1: C.length + 3, c: 'bear', t: 'PDL', below: true }], h: 240, dec: 0 });
+    CH.candlesA(box(host), C, { slots: C.length + 3, ann: [{ k: 'h', p: prev.h, i0: C.length - 2, i1: C.length + 3, c: 'bull', t: 'PDH' }, { k: 'h', p: prev.l, i0: C.length - 2, i1: C.length + 3, c: 'bear', t: 'PDL', below: true }], h: 240, dec: 0 });
     cap(host, 'Velas diarias con tendencia alcista: sesgo alcista y objetivo en la liquidez del máximo previo (PDH).');
   };
   DG.news = (host) => {
     const { C } = CH.script(101, 100, 0.8, [['d', 6, 101, 0.4], ['bar', 0, [101, 106.5, 100.6, 104]], ['bar', 0, [104, 104.5, 96.2, 97]], ['d', 4, 99.5, 0.6], ['d', 4, 100.5, 0.5]]);
-    CH.candles(box(host), C, { ann: [{ k: 'v', i: 6, c: 'bear', t: '8:30 dato alto impacto' }], h: 240, dec: 0 });
+    CH.candlesA(box(host), C, { ann: [{ k: 'v', i: 6, c: 'bear', t: '8:30 dato alto impacto' }], h: 240, dec: 0 });
     cap(host, 'Las noticias de alto impacto barren liquidez de ambos lados en segundos.');
   };
   DG.smt = (host) => {
@@ -193,13 +193,13 @@
       const cell = document.createElement('div'); g.appendChild(cell);
       cell.appendChild(h(`<p class="dg-tag">${t}</p>`));
       const lo7 = Math.min(...C.slice(5, 8).map((x) => x.l));
-      CH.candles(box(cell), C, { ann: [{ k: 'h', p: lo7, i0: 5, i1: C.length, c, below: true }], h: 200, dec: 0 });
+      CH.candlesA(box(cell), C, { ann: [{ k: 'h', p: lo7, i0: 5, i1: C.length, c, below: true }], h: 200, dec: 0 });
     });
     cap(host, 'NQ barre el mínimo y ES no lo confirma: SMT alcista.');
   };
   DG.bidask = (host) => {
     const { C } = CH.script(121, 100, 1, [['d', 4, 101, 0.4], ['d', 6, 108, 0.5], ['d', 6, 100, 0.5], ['d', 2, 101, 0.4]]);
-    CH.candles(box(host), C, { ann: [{ k: 'trade', i0: 3, i1: 10, entry: 100.8, sl: 98.8, tp: 106.8, labels: false }, { k: 'txt', i: 4, p: 107.6, t: 'Long: ganas si sube', c: 'bull' }, { k: 'trade', i0: 10, i1: 17, entry: 107, sl: 109, tp: 101, labels: false }, { k: 'txt', i: 11, p: 110, t: 'Short: ganas si baja', c: 'bear' }], h: 240, dec: 0 });
+    CH.candlesA(box(host), C, { ann: [{ k: 'trade', i0: 3, i1: 10, entry: 100.8, sl: 98.8, tp: 106.8, labels: false }, { k: 'txt', i: 4, p: 107.6, t: 'Long: ganas si sube', c: 'bull' }, { k: 'trade', i0: 10, i1: 17, entry: 107, sl: 109, tp: 101, labels: false }, { k: 'txt', i: 11, p: 110, t: 'Short: ganas si baja', c: 'bear' }], h: 240, dec: 0 });
   };
 
   // --- Curvas ---

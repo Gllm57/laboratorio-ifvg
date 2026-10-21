@@ -11,6 +11,7 @@
   const blank = () => ({ lessons: {}, xp: 0, ex: {}, sims: [], exam: null, last: 1 });
   let S = blank();
   try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(blank(), JSON.parse(raw)); } catch (e) { /* sin almacenamiento */ }
+  if (S.onb == null) S.onb = S.xp > 0; // quien ya tenía progreso no ve la bienvenida
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignorar */ } renderHeader(); };
   const addXP = (n) => { S.xp += Math.round(n); };
 
@@ -35,12 +36,14 @@
   }
 
   // ---------- Navegación ----------
-  const VIEWS = ['inicio', 'ruta', 'estrategia', 'practica', 'simulador', 'diario'];
+  const VIEWS = ['inicio', 'ruta', 'estrategia', 'practica', 'simulador', 'diario', 'bienvenida'];
   let view = 'inicio', lessonDay = null;
   function go(hash) {
     const m = /^dia(\d+)$/.exec(hash);
     if (m) { view = 'ruta'; lessonDay = Math.min(50, Math.max(1, +m[1])); }
     else { view = VIEWS.includes(hash) ? hash : 'inicio'; lessonDay = null; }
+    if (!S.onb && !m) view = 'bienvenida';
+    if (view !== 'bienvenida') document.body.classList.remove('onb');
     document.querySelectorAll('.nav a').forEach((a) => a.setAttribute('aria-current', a.dataset.v === view ? 'page' : 'false'));
     stopAuto();
     render();
@@ -57,54 +60,107 @@
   function render() {
     const main = $('#main');
     main.innerHTML = '';
-    ({ inicio: vHome, ruta: lessonDay ? vLesson : vPath, estrategia: vStrategy, practica: vPractice, simulador: vSim, diario: vJournal })[view](main);
+    ({ bienvenida: vWelcome, inicio: vHome, ruta: lessonDay ? vLesson : vPath, estrategia: vStrategy, practica: vPractice, simulador: vSim, diario: vJournal })[view](main);
     renderHeader();
   }
   const H = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+
+  // ---------- Bienvenida (primera visita) ----------
+  const SLIDES = [
+    { t: 'Aprende a operar con una sola estrategia', d: '50 días del Esses Bootcamp, práctica guiada y un simulador que evalúa tu disciplina.', v: 'chart' },
+    { t: 'Tres pasos, siempre los mismos', d: 'Toma de liquidez, IFVG y objetivo claro. Si falta uno, no hay trade.', v: 'steps' },
+    { t: 'Tu nota mide el proceso, no la suerte', d: 'Cada sesión simulada recibe una nota de disciplina sobre 100 según tu plan de trading.', v: 'score' },
+  ];
+  let slide = 0;
+  function vWelcome(m) {
+    document.body.classList.add('onb');
+    const sl = SLIDES[slide], last = slide === SLIDES.length - 1;
+    const el = H(`<section class="welcome">
+      <div class="w-top"><button class="link" type="button" id="w-skip">Saltar ›</button></div>
+      <div class="w-vis" id="w-vis"></div>
+      <div class="w-txt"><h1>${sl.t}</h1><p class="lead">${sl.d}</p>
+        <div class="dots" aria-label="Paso ${slide + 1} de ${SLIDES.length}">${SLIDES.map((_, i) => `<span class="${i === slide ? 'on' : ''}"></span>`).join('')}</div>
+        <button class="btn pri wide" type="button" id="w-next">${last ? 'Empezar' : 'Continuar'}</button></div>
+    </section>`);
+    m.appendChild(el);
+    const vis = $('#w-vis');
+    if (sl.v === 'chart') { const c = H('<div class="float-card"><div class="fc-head"><span>NQ · 1 minuto</span><span class="tag">Modelo 1</span></div><div id="w-chart"></div><div class="fc-msg">El precio barrió el mínimo e invalidó el FVG</div></div>'); vis.appendChild(c); vis.appendChild(H('<span class="float-tag">✓ Toma de liquidez + IFVG</span>')); requestAnimationFrame(() => { const F = CH.findSession('model1', 'm1', (S2, f) => f && f.model === 1); const { ann } = CH.setupAnn(F.S.C, F.f); CH.candlesA($('#w-chart'), F.S.C.slice(22, F.f.t + 12), { ann: ann.filter((a) => a.k === 'box' || a.k === 'h').map((a) => { const y = { ...a }; for (const k of ['i', 'i0', 'i1']) if (y[k] != null) y[k] -= 22; y.t = ''; return y; }), h: 170, axis: false }); }); }
+    if (sl.v === 'steps') vis.appendChild(H('<div class="w-steps"><div><i>1</i><b>Toma de liquidez</b><span>Barre un máximo o mínimo</span></div><div><i>2</i><b>IFVG</b><span>Un cierre invalida el FVG</span></div><div><i>3</i><b>Objetivo claro</b><span>Liquidez sin tomar, R:R ≥ 1</span></div></div>'));
+    if (sl.v === 'score') vis.appendChild(H('<div class="w-score"><div class="ring"><b>92</b><span>de 100</span></div><ul><li>✓ Horario</li><li>✓ Toma de liquidez</li><li>✓ IFVG</li><li class="warn-i">! Stop lejos</li></ul></div>'));
+    const finish = () => { S.onb = true; save(); document.body.classList.remove('onb'); location.hash = 'inicio'; go('inicio'); };
+    $('#w-next').onclick = () => { if (last) finish(); else { slide++; render(); } };
+    $('#w-skip').onclick = finish;
+  }
+
+  // Hora de Nueva York y estado de la ventana operativa
+  function nyStatus() {
+    try {
+      const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: 'numeric', hour12: false }).formatToParts(new Date()).map((p) => [p.type, p.value]));
+      const min = (+parts.hour % 24) * 60 + +parts.minute, wd = parts.weekday;
+      const weekend = wd === 'Sat' || wd === 'Sun';
+      if (!weekend && min >= 570 && min < 660) return { open: true, text: `Ventana abierta · quedan ${660 - min} min` };
+      if (!weekend && min < 570) { const d = 570 - min; return { open: false, text: `Faltan ${Math.floor(d / 60) ? Math.floor(d / 60) + ' h ' : ''}${d % 60} min para la apertura` }; }
+      return { open: false, text: weekend || wd === 'Fri' ? 'Próxima apertura: lunes 9:30 (NY)' : 'Próxima apertura: mañana 9:30 (NY)' };
+    } catch (e) { return { open: false, text: 'Sesión NY AM 9:30–11:00' }; }
+  }
 
   // ---------- Inicio ----------
   function vHome(m) {
     const { cur, next } = currentLevel();
     const done = daysDone(1, 50);
     const nextDay = (() => { for (let d = 1; d <= 50; d++) if (!S.lessons[d]?.passed) return d; return 50; })();
+    const NL = window.LESSONS.find((l) => l.d === nextDay);
     const totR = S.sims.reduce((a, b) => a + (b.R || 0), 0);
-    m.appendChild(H(`<section class="hero">
-      <div class="hero-txt">
-        <p class="eyebrow">Basado en el Esses Bootcamp · Fede Esses</p>
-        <h1>Una estrategia. Tres modelos. Cero improvisación.</h1>
-        <p class="lead">Aprende los 50 días del bootcamp, entrena el ojo con prácticas evaluadas y opera sesiones simuladas de NY AM con la estrategia de toma de liquidez + IFVG + objetivo claro.</p>
-        <div class="row"><a class="btn pri" href="#dia${nextDay}">${done ? 'Continuar' : 'Empezar'}: Día ${nextDay}</a><a class="btn" href="#simulador">Abrir simulador</a></div>
+    const pct = next ? Math.round(next.reqs.reduce((a, [, v, g]) => a + Math.min(1, v / g), 0) / next.reqs.length * 100) : 100;
+    const pend = next ? next.reqs.find(([, v, g]) => v < g) : null;
+    const ny = nyStatus();
+    m.appendChild(H(`<section class="g-hero">
+      <div class="g-row"><span class="pill-dark ${ny.open ? 'live' : ''}"><i></i>${ny.text}</span></div>
+      <h1>Hola de nuevo,<br><b>${done ? `sigamos con el día ${nextDay}` : 'empecemos por el día 1'}</b></h1>
+      <div class="lvl-card">
+        <div class="lvl-top"><span><small>Tu nivel</small><b>${cur.n} · ${cur.name}</b></span><span class="xp">${S.xp.toLocaleString('es-ES')} <small>XP</small></span></div>
+        <i class="gbar"><i style="width:${pct}%"></i></i>
+        <small>${next ? `Para ${next.name}: ${pend ? pend[0].toLowerCase() : 'casi listo'}` : 'Nivel máximo alcanzado'}</small>
       </div>
-      <div class="hero-chart" id="hero-chart"></div>
     </section>`));
-    const hc = $('#hero-chart');
-    requestAnimationFrame(() => { DG.m1(hc); });
-    m.appendChild(H(`<section class="tiles">
-      <div class="tile"><span>Días completados</span><b>${done}<small>/50</small></b><i class="bar"><i style="width:${done * 2}%"></i></i></div>
-      <div class="tile"><span>Identificación</span><b>${Math.round(exAvg(ID_EX))}<small>%</small></b><i class="bar"><i style="width:${exAvg(ID_EX)}%"></i></i></div>
-      <div class="tile"><span>Sesiones simuladas</span><b>${S.sims.length}</b><small class="sub">${totR >= 0 ? '+' : ''}${totR.toFixed(1)} R acumulado</small></div>
-      <div class="tile"><span>Disciplina media</span><b>${S.sims.length ? Math.round(simAvg(20)) : '—'}<small>/100</small></b><small class="sub">últimas 20 sesiones</small></div>
+    m.appendChild(H(`<section class="card rows">
+      <div><span>Disciplina media</span><b>${S.sims.length ? Math.round(simAvg(20)) + ' / 100' : '—'}</b></div>
+      <div><span>Resultado simulado</span><b class="${totR >= 0 ? 'pos' : 'neg'}">${S.sims.length ? (totR >= 0 ? '+' : '') + totR.toLocaleString('es-ES', { maximumFractionDigits: 1 }) + ' R' : '—'}</b></div>
+      <div><span>Días completados</span><b>${done} / 50</b></div>
+      <div><span>Identificación</span><b>${Math.round(exAvg(ID_EX))} %</b></div>
     </section>`));
-    const lv = H(`<section class="panel level"><div class="level-head"><div><p class="eyebrow">Tu nivel</p><h2>Nivel ${cur.n} · ${cur.name}</h2></div><div class="ladder">${levels().map((l) => `<span class="${l.n <= cur.n ? 'on' : ''}">${l.n}</span>`).join('')}</div></div>
-      ${next ? `<p>Para llegar a <b>Nivel ${next.n} · ${next.name}</b>:</p><ul class="reqs">${next.reqs.map(([t, v, g, u = '']) => `<li class="${v >= g ? 'ok' : ''}"><span>${t}</span><b>${v}${u} / ${g}${u}</b></li>`).join('')}</ul>` : '<p>Llegaste al nivel máximo. Sigue con una sesión simulada por día para mantener la consistencia.</p>'}
-    </section>`);
-    m.appendChild(lv);
-    m.appendChild(H(`<section class="panel"><h2>Tu rutina diaria</h2><ol class="routine">
-      <li><b>Lección del día</b><span>Lee, mira el diagrama y aprueba el control.</span></li>
-      <li><b>Práctica</b><span>Una ronda de identificación (5 ejercicios).</span></li>
-      <li><b>Sesión simulada</b><span>Opera la apertura de NY con el checklist.</span></li>
-      <li><b>Diario</b><span>Anota cómo te sentiste y qué mejorar.</span></li></ol></section>`));
+    m.appendChild(H(`<section class="actions">
+      <a href="#dia${nextDay}" class="act"><i>›</i><span><small>Seguir</small><b>Día ${nextDay}</b><em>${esc(NL.t)}</em></span></a>
+      <a href="#practica" class="act acc"><i>+</i><span><small>Practicar</small><b>Ejercicios</b><em>Rondas de 5</em></span></a>
+      <a href="#simulador" class="act lav"><i>▸</i><span><small>Abrir</small><b>Sesión</b><em>NY AM simulada</em></span></a>
+    </section>`));
+    const last = S.sims.slice(-5);
+    m.appendChild(H(`<section class="card"><div class="card-head"><h2>Disciplina por sesión</h2><span class="muted small">últimas ${last.length || 5}</span></div>
+      ${last.length ? `<div class="pbars">${last.map((x, i) => `<div><span>${x.score}</span><i class="${x.score >= 85 ? 'g' : x.score >= 50 ? 'y' : 'p'}" style="--h:${Math.max(6, x.score)}%;animation-delay:${i * 80}ms"></i></div>`).join('')}</div>
+      <div class="legend"><span><i class="g"></i>Con el plan (≥ 85)</span><span><i class="y"></i>Mejorable</span><span><i class="p"></i>Fuera del plan</span></div>`
+      : '<p class="muted">Todavía no hay sesiones. Tu primera sesión simulada aparecerá aquí con su nota de disciplina.</p><a class="btn" href="#simulador">Abrir el simulador</a>'}</section>`));
+    const how = H('<section class="card"><div class="card-head"><h2>Así se ve un trade del plan</h2><span class="muted small">Modelo 1</span></div><div id="hero-chart"></div></section>');
+    m.appendChild(how);
+    requestAnimationFrame(() => DG.m1($('#hero-chart')));
+    if (next) m.appendChild(H(`<section class="card"><div class="card-head"><h2>Para llegar a ${next.name}</h2><span class="muted small">Nivel ${next.n}</span></div><ul class="reqs">${next.reqs.map(([t, v, g, u = '']) => `<li class="${v >= g ? 'ok' : ''}"><span>${t}</span><b>${v}${u} / ${g}${u}</b></li>`).join('')}</ul></section>`));
     m.appendChild(H(`<p class="disclaimer">Material educativo no oficial, elaborado a partir de los títulos del bootcamp y de la explicación de la estrategia de Fede Esses. Los gráficos de práctica se generan por simulación; no son datos reales del mercado. Operar futuros con apalancamiento implica riesgo de pérdida. Mira los videos originales en <a href="${PLAYLIST}" target="_blank" rel="noopener">YouTube</a>.</p>`));
   }
 
   // ---------- Ruta ----------
   function vPath(m) {
-    m.appendChild(H(`<header class="page-head"><p class="eyebrow">Ruta de 50 días</p><h1>De cero a experto</h1><p class="lead">Cada día tiene un resumen, un diagrama y un control de 2 preguntas. Apruébalo para marcar el día como completado.</p></header>`));
+    const nextDay = (() => { for (let d = 1; d <= 50; d++) if (!S.lessons[d]?.passed) return d; return 50; })();
+    const NL = window.LESSONS.find((l) => l.d === nextDay);
+    m.appendChild(H(`<header class="page-head"><h1>Mi ruta de 50 días</h1><p class="lead">Cada día tiene un resumen, un diagrama y un control de 2 preguntas.</p></header>`));
+    m.appendChild(H(`<a class="g-card" href="#dia${nextDay}"><small>Continuar · Día ${nextDay}</small><b>${esc(NL.t)}</b><i>›</i></a>`));
     for (const p of window.PHASES) {
       const ls = window.LESSONS.filter((l) => l.d >= p.days[0] && l.d <= p.days[1]);
-      const k = daysDone(p.days[0], p.days[1]);
-      m.appendChild(H(`<section class="phase"><div class="phase-head"><div><p class="eyebrow">Fase ${p.id} · días ${p.days[0]}–${p.days[1]}</p><h2>${p.name}</h2><p class="muted">${p.goal}</p></div><span class="pill ${k === ls.length ? 'ok' : ''}">${k}/${ls.length}</span></div>
-        <div class="days">${ls.map((l) => `<a class="day ${S.lessons[l.d]?.passed ? 'done' : ''}" href="#dia${l.d}"><span class="dn">Día ${l.d}</span><span class="dt">${esc(l.t)}</span></a>`).join('')}</div></section>`));
+      const k = daysDone(p.days[0], p.days[1]), pc = Math.round(k / ls.length * 100);
+      const st = pc === 100 ? ['Completa', 'pos'] : pc ? ['En curso', 'acc-t'] : ['Pendiente', 'muted'];
+      m.appendChild(H(`<section class="card phase"><div class="card-head line"><h2>${p.name}</h2><span class="muted small">Fase ${p.id}</span></div>
+        <p class="muted small">${p.goal}</p>
+        <i class="gbar big"><i style="width:${pc}%"></i></i>
+        <div class="stats3"><span><small>Días</small>${p.days[0]}–${p.days[1]}</span><span><small>Completados</small>${k} de ${ls.length}</span><span><small>Estado</small><b class="${st[1]}">${st[0]}</b></span></div>
+        <div class="days">${ls.map((l) => `<a class="day ${S.lessons[l.d]?.passed ? 'done' : ''} ${l.d === nextDay ? 'now' : ''}" href="#dia${l.d}"><span class="dn">${l.d}</span><span class="dt">${esc(l.t)}</span></a>`).join('')}</div></section>`));
     }
   }
 
