@@ -72,6 +72,15 @@
     swapT = setTimeout(swap, 140);
   }
   window.addEventListener('hashchange', () => go(location.hash.slice(1)));
+  // Tocar la pestaña de la sección actual vuelve a su inicio (p. ej. salir de un ejercicio o de una lección)
+  document.querySelector('.nav').addEventListener('click', (e) => {
+    const a = e.target.closest('a[data-v]'); if (!a || a.dataset.v !== view) return;
+    e.preventDefault();
+    if (view === 'practica') EX = null;
+    if (lessonDay) { location.hash = 'ruta'; return; }
+    if (location.hash.slice(1) !== view) { location.hash = view; return; }
+    if (window.scrollY > 10) window.scrollTo({ top: 0, behavior: reduceMotion() ? 'auto' : 'smooth' }); else go(view);
+  });
 
   function renderHeader() {
     const { cur } = currentLevel();
@@ -82,6 +91,7 @@
   function render() {
     const main = $('#main');
     main.innerHTML = '';
+    document.body.classList.toggle('in-sim', view === 'simulador');
     ({ bienvenida: vWelcome, inicio: vHome, ruta: lessonDay ? vLesson : vPath, estrategia: vStrategy, practica: vPractice, simulador: vSim, diario: vJournal })[view](main);
     renderHeader();
   }
@@ -89,7 +99,7 @@
 
   // ---------- Bienvenida (primera visita) ----------
   const SLIDES = [
-    { t: 'Aprende a operar con una sola estrategia', d: '50 días del Esses Bootcamp, práctica guiada y un simulador que evalúa tu disciplina.', v: 'chart' },
+    { t: 'Aprende a operar con una sola estrategia', d: '50 días del bootcamp, práctica guiada y un simulador que evalúa tu disciplina.', v: 'chart' },
     { t: 'Tres pasos, siempre los mismos', d: 'Toma de liquidez, IFVG y objetivo claro. Si falta uno, no hay trade.', v: 'steps' },
     { t: 'Tu nota mide el proceso, no la suerte', d: 'Cada sesión simulada recibe una nota de disciplina sobre 100 según tu plan de trading.', v: 'score' },
   ];
@@ -165,7 +175,7 @@
     m.appendChild(how);
     requestAnimationFrame(() => DG.m1($('#hero-chart')));
     if (next) m.appendChild(H(`<section class="card"><div class="card-head"><h2>Para llegar a ${next.name}</h2><span class="muted small">Nivel ${next.n}</span></div><ul class="reqs">${next.reqs.map(([t, v, g, u = '']) => `<li class="${v >= g ? 'ok' : ''}"><span>${t}</span><b>${v}${u} / ${g}${u}</b></li>`).join('')}</ul></section>`));
-    m.appendChild(H(`<p class="disclaimer">Material educativo no oficial, elaborado a partir de los títulos del bootcamp y de la explicación de la estrategia de Fede Esses. Los gráficos de práctica se generan por simulación; no son datos reales del mercado. Operar futuros con apalancamiento implica riesgo de pérdida. Mira los videos originales en <a href="${PLAYLIST}" target="_blank" rel="noopener">YouTube</a>.</p>`));
+    m.appendChild(H(`<p class="disclaimer">Material educativo no oficial, elaborado a partir de los títulos y de la explicación de la estrategia del bootcamp. Los gráficos de práctica se generan por simulación; no son datos reales del mercado. Operar futuros con apalancamiento implica riesgo de pérdida. Mira los videos originales en <a href="${PLAYLIST}" target="_blank" rel="noopener">YouTube</a>.</p>`));
   }
 
   // ---------- Ruta ----------
@@ -214,7 +224,7 @@
       <section class="card"><h2>Ideas clave</h2><ul class="keys">${L.pts.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>
       ${T.err.length ? `<section class="card"><h2>Errores comunes</h2><ul class="x">${T.err.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
       ${T.ej ? `<section class="card example"><h2>Ejemplo</h2><p>${esc(T.ej)}</p></section>` : ''}
-      <p class="muted small">Video original: “${esc(L.t)} | Esses Bootcamp Día ${L.d}” en la <a href="${PLAYLIST}" target="_blank" rel="noopener">playlist de YouTube</a>.</p>
+      <p class="muted small">Video original: “${esc(L.t)} | Día ${L.d}” en la <a href="${PLAYLIST}" target="_blank" rel="noopener">playlist de YouTube</a>.</p>
       <section class="card quiz" id="quiz"><h2>Control del día</h2>${st.passed ? '<p class="pill ok">Aprobado</p>' : ''}</section>
       <nav class="pager">${L.d > 1 ? `<a class="btn" href="#dia${L.d - 1}">← Día ${L.d - 1}</a>` : '<span></span>'}${L.d < 50 ? `<a class="btn" href="#dia${L.d + 1}">Día ${L.d + 1} →</a>` : '<a class="btn" href="#estrategia">Examen final →</a>'}</nav>
     </article>`);
@@ -265,7 +275,7 @@
     const sess = H('<section class="panel"><h2>Horario operativo</h2><div id="dg-sess"></div></section>'); m.appendChild(sess);
     DG.sessions($('#dg-sess'));
     const models = [
-      [1, 'Manipulación', '9:30–10:00', 'El mercado abre, manipula (barre liquidez), reacciona en un punto de interés y da un IFVG. Es la variable preferida de Fede.'],
+      [1, 'Manipulación', '9:30–10:00', 'El mercado abre, manipula (barre liquidez), reacciona en un punto de interés y da un IFVG. Es la variable preferida del mentor.'],
       [2, 'Continuación', '10:00–10:30 (hasta 11:00)', 'La apertura no manipuló: expandió. Esperas un retroceso a un FVG, una toma de liquidez interna y un IFVG a favor de la expansión.'],
       [3, 'Retroceso', 'Tras una expansión sin entrada', 'El precio expandió sin dar continuación. Como no equilibró compradores y vendedores, esperas la toma del extremo y un IFVG hacia los FVG sin rellenar.'],
     ];
@@ -458,7 +468,7 @@
   function stopAuto() { if (autoT) { clearInterval(autoT); autoT = null; } }
   function newSim(seed) {
     const sd = seed ?? rand();
-    SIM = { tf: SIM?.tf || 1, htfTf: SIM?.htfTf || 60, seed: sd, S: E.genSession(sd), t: E.OPEN - 1, trades: [], open: null, order: null, done: false, assist: SIM?.assist ?? true, inst: SIM?.inst || 'MNQ', acct: SIM?.acct || 50000, risk: SIM?.risk ?? 0.5, result: null };
+    SIM = { speed: SIM?.speed || 1, tf: SIM?.tf || 1, htfTf: SIM?.htfTf || 60, seed: sd, S: E.genSession(sd), t: E.OPEN - 1, trades: [], open: null, order: null, done: false, assist: SIM?.assist ?? true, inst: SIM?.inst || 'MNQ', acct: SIM?.acct || 50000, risk: SIM?.risk ?? 0.5, result: null };
   }
   function vSim(m) {
     if (!SIM) newSim();
@@ -543,7 +553,7 @@
     if (!SIM.done && fit < total) { slots = fit; s0 = Math.max(0, A.length - (fit - 6)); }
     const mapped = CH.mapAnn(ann, tf).filter((x) => (x.i1 == null || x.i1 > s0) && (x.i == null || x.i >= s0))
       .map((x) => { const y = { ...x }; for (const k of ['i', 'i0', 'i1']) if (y[k] != null) y[k] = Math.max(0, y[k] - s0); return y; });
-    const api = CH.candles(host, A.slice(s0), { tf, t0: s0 * tf, slots, ann: mapped, times: true, h: cw < 500 ? 300 : 340, minBw: 6, cross: true, onPick: SIM.order ? orderPick : null, label: `NQ ${tf} minutos` });
+    const api = CH.candles(host, A.slice(s0), { tf, t0: s0 * tf, slots, ann: mapped, times: true, h: cw < 500 ? Math.round(Math.max(220, Math.min(380, window.innerHeight - 500))) : 340, minBw: 6, cross: true, onPick: SIM.order ? orderPick : null, label: `NQ ${tf} minutos` });
     host.scrollLeft = Math.max(0, api.x(A.length - 1 - s0) - host.clientWidth + 120);
     simStats(); simCtrl(); simOrder();
   }
@@ -586,29 +596,36 @@
   }
   function simCtrl() {
     const c = $('#sim-ctrl'); if (!c) return;
-    if (SIM.done) { c.innerHTML = `<div class="row"><button class="btn pri" id="sim-new" type="button">Nueva sesión</button></div>`; $('#sim-new').onclick = () => { newSim(); render(); }; return; }
+    if (SIM.done) { c.innerHTML = `<div class="dock-row"><button class="btn pri wide" id="sim-new" type="button">Nueva sesión</button></div>`; $('#sim-new').onclick = () => { newSim(); render(); }; return; }
+    if (SIM.order) { c.innerHTML = ''; return; } // la hoja de la orden ocupa su lugar
     const op = SIM.trades.find((x) => x.exitI == null);
-    const canTrade = !op && !SIM.order;
-    c.innerHTML = `<div class="row">
-      <button class="btn" id="sim-step" type="button" ${SIM.order ? 'disabled' : ''}>+1 min</button>
-      <button class="btn" id="sim-auto" type="button" ${SIM.order ? 'disabled' : ''}>${autoT ? 'Pausa' : 'Reproducir'}</button>
-      <button class="btn" id="sim-5" type="button" ${SIM.order ? 'disabled' : ''}>${SIM.tf === 1 ? '+5 min' : `+1 vela ${SIM.tf}m`}</button>
-      <span class="sp"></span>
-      <button class="btn buy" id="sim-buy" type="button" ${canTrade ? '' : 'disabled'}>Comprar</button>
-      <button class="btn sell" id="sim-sell" type="button" ${canTrade ? '' : 'disabled'}>Vender</button>
-      ${op ? `<button class="btn" id="sim-be" type="button" ${op.slNow === op.entry ? 'disabled' : ''}>Stop a break even</button><button class="btn" id="sim-close" type="button">Cerrar a mercado</button>` : ''}
-      <button class="btn ghost" id="sim-end" type="button">Terminar sesión</button></div>`;
+    const sp = SIM.speed || 1;
+    c.innerHTML = `<div class="dock-row steps">
+        <button class="btn" id="sim-step" type="button">+1 min</button>
+        <button class="btn play" id="sim-auto" type="button" aria-label="${autoT ? 'Pausar' : 'Reproducir'}">${autoT ? '❚❚ Pausa' : '▶ Reproducir'}</button>
+        <button class="btn speed" id="sim-speed" type="button" aria-label="Velocidad de reproducción">×${sp}</button>
+        <button class="btn" id="sim-5" type="button">${SIM.tf === 1 ? '+5 min' : `+1 vela ${SIM.tf}m`}</button>
+      </div>
+      <div class="dock-row trade">
+        ${op ? `<button class="btn" id="sim-be" type="button" ${op.slNow === op.entry ? 'disabled' : ''}>Stop a BE</button><button class="btn" id="sim-close" type="button">Cerrar a mercado</button>`
+          : `<button class="btn buy" id="sim-buy" type="button">Comprar</button><button class="btn sell" id="sim-sell" type="button">Vender</button>`}
+        <button class="btn ghost end" id="sim-end" type="button">Terminar</button>
+      </div>`;
+    const play = () => { stopAuto(); autoT = setInterval(() => simStep(1), 450 / (SIM.speed || 1)); };
     $('#sim-step').onclick = () => simStep(1);
     $('#sim-5').onclick = () => simStep(SIM.tf === 1 ? 5 : SIM.tf - (SIM.t + 1) % SIM.tf || SIM.tf);
-    $('#sim-auto').onclick = () => { if (autoT) stopAuto(); else autoT = setInterval(() => simStep(1), 450); simCtrl(); };
-    $('#sim-buy').onclick = () => openOrder(1);
-    $('#sim-sell').onclick = () => openOrder(-1);
+    $('#sim-auto').onclick = () => { if (autoT) stopAuto(); else play(); simCtrl(); };
+    $('#sim-speed').onclick = () => { SIM.speed = sp === 1 ? 2 : sp === 2 ? 4 : 1; if (autoT) play(); simCtrl(); };
     $('#sim-end').onclick = () => simFinish();
     if (op) {
-      $('#sim-be').onclick = () => { op.slNow = op.entry; op.be = true; simDraw(); };
+      $('#sim-be').onclick = () => { op.slNow = op.entry; op.be = true; buzz(15); simDraw(); };
       $('#sim-close').onclick = () => { closeTrade(op, SIM.S.C[SIM.t].c, SIM.t, 'Cierre manual'); simDraw(); };
+    } else {
+      $('#sim-buy').onclick = () => openOrder(1);
+      $('#sim-sell').onclick = () => openOrder(-1);
     }
   }
+  const buzz = (p) => { try { navigator.vibrate?.(p); } catch (e) { /* sin vibración */ } };
   function simStep(k) {
     if (SIM.done) return stopAuto();
     for (let j = 0; j < k; j++) {
@@ -625,12 +642,14 @@
     }
     simDraw();
   }
-  function closeTrade(tr, px, i, reason) { tr.exit = px; tr.exitI = i; tr.reason = reason; tr.R = (px - tr.entry) * tr.dir / Math.abs(tr.entry - tr.sl); }
+  function closeTrade(tr, px, i, reason) { tr.exit = px; tr.exitI = i; tr.reason = reason; tr.R = (px - tr.entry) * tr.dir / Math.abs(tr.entry - tr.sl); buzz(reason === 'Take profit' ? [20, 40, 20] : 30); }
   function openOrder(dir) {
     stopAuto();
     if (SIM.trades.length) SIM.warn = 'Tu plan dice un trade por sesión. Si entras otra vez, se descuenta en tu nota.';
     SIM.order = { dir, entry: SIM.S.C[SIM.t].c, sl: null, tp: null, risk: SIM.risk };
     simDraw();
+    // en el celular, dejar el gráfico a la vista encima de la hoja para poder tocar el stop y el objetivo
+    if (window.innerWidth <= 760) { const c = $('#sim-chart'); if (c) window.scrollTo({ top: c.getBoundingClientRect().top + window.scrollY - 70, behavior: 'auto' }); }
   }
   function orderPick(q) {
     const o = SIM.order; if (!o) return;
@@ -650,35 +669,62 @@
     else if (o.sl != null && qty < 1) err = `Con ${o.risk.toLocaleString('es-ES')} % y ${stopPts.toLocaleString('es-ES')} puntos de stop no alcanza para 1 contrato de ${SIM.inst}. Acerca el stop o usa un micro (MNQ o MES).`;
     return { pv, stopPts, riskUsd, qty, realPct, rr, err };
   }
+  // Sugerencias según la estrategia: stop tras el extremo del barrido y TP en el objetivo más cercano con R:R ≥ 1
+  function suggest(o) {
+    const C = SIM.S.C, t = SIM.t, dir = o.dir;
+    const sw = E.sweeps(C, t + 1).filter((x) => x.dir === dir && x.j >= t - 15 && x.j <= t);
+    const from = sw.length ? sw[sw.length - 1].j : Math.max(0, t - 10);
+    const seg = C.slice(from, t + 1);
+    const sl = E.rt(dir > 0 ? Math.min(...seg.map((b) => b.l)) - 1 : Math.max(...seg.map((b) => b.h)) + 1);
+    const risk = Math.abs(o.entry - (o.sl ?? sl));
+    const tg = E.targets(C, t, dir).find((x) => (x.p - o.entry) * dir >= risk);
+    return { sl, slWhy: sw.length ? 'tras el barrido' : 'tras el extremo reciente', tp: tg ? tg.p : null, tpWhy: tg ? tg.kind : '' };
+  }
+  // Lee precios escritos como 20.376,25 · 20376,25 · 20376.25
+  const num = (v) => {
+    let t = String(v).trim().replace(/\s/g, '');
+    if (!t) return null;
+    if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.');
+    else if ((t.match(/\./g) || []).length > 1 || /^\d{1,3}\.\d{3}$/.test(t)) t = t.replace(/\./g, '');
+    const x = parseFloat(t); return isFinite(x) ? x : null;
+  };
   function simOrder() {
     const host = $('#sim-order'); if (!host) return;
     if (!SIM.order) { host.innerHTML = SIM.warn && !SIM.done ? `<p class="warn">${SIM.warn}</p>` : ''; return; }
-    const o = SIM.order, k = orderCalc(o);
-    const step = o.sl == null ? `Toca el gráfico para fijar el <b>stop loss</b>.` : o.tp == null ? 'Ahora toca el gráfico para fijar el <b>take profit</b>.' : 'Ajusta con los campos o toca cerca de una línea para moverla.';
-    host.innerHTML = `<form class="panel order ${o.dir > 0 ? 'is-buy' : 'is-sell'}" id="ord">
-      <div class="order-head"><b>${o.dir > 0 ? 'Compra' : 'Venta'} a mercado · ${fmt(o.entry)}</b><span class="muted small">${step}</span></div>
-      <div class="form-grid">
-        <label for="o-sl">Stop loss<input id="o-sl" type="number" step="0.25" value="${o.sl ?? ''}"></label>
-        <label for="o-tp">Take profit<input id="o-tp" type="number" step="0.25" value="${o.tp ?? ''}"></label>
-        <label for="o-risk">Riesgo %<input id="o-risk" type="number" step="0.05" min="0.05" max="5" value="${o.risk}"></label>
-      </div>
-      <div class="order-sum mono">
-        <span>Stop: <b>${k.stopPts ? k.stopPts.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + ' pts' : '—'}</b></span>
-        <span>R:R: <b>${k.rr != null ? '1:' + k.rr.toLocaleString('es-ES', { maximumFractionDigits: 2 }) : '—'}</b></span>
-        <span>Contratos: <b>${k.qty || '—'} ${SIM.inst}</b></span>
-        <span>Riesgo real: <b>${k.qty ? (k.qty * k.stopPts * k.pv).toLocaleString('es-ES') + ' $ · ' + k.realPct.toLocaleString('es-ES', { maximumFractionDigits: 2 }) + ' %' : '—'}</b></span>
+    const o = SIM.order, k = orderCalc(o), sg = SIM.assist ? suggest(o) : null;
+    const buy = o.dir > 0;
+    const step = o.sl == null ? 'Toca el gráfico para fijar el <b>stop loss</b>' : o.tp == null ? 'Ahora toca el gráfico para fijar el <b>take profit</b>' : 'Ajusta con − y + o tocando el gráfico';
+    const field = (id, label, v, cls) => `<div class="stepper ${cls}"><span>${label}</span><button type="button" class="st-b" data-f="${id}" data-d="-1" aria-label="Bajar ${label}">−</button><input id="o-${id}" inputmode="decimal" autocomplete="off" value="${v != null ? v.toLocaleString('es-ES', { useGrouping: false, minimumFractionDigits: 2 }) : ''}" placeholder="toca el gráfico" aria-label="${label}"><button type="button" class="st-b" data-f="${id}" data-d="1" aria-label="Subir ${label}">+</button></div>`;
+    host.innerHTML = `<form class="order sheet ${buy ? 'is-buy' : 'is-sell'}" id="ord">
+      <div class="sheet-head"><span><b>${buy ? 'Compra' : 'Venta'} a mercado</b><small class="mono">${fmt(o.entry)}</small></span><button type="button" class="x" id="o-cancel" aria-label="Cancelar orden">✕</button></div>
+      <p class="hint">${step}</p>
+      <div class="steppers">${field('sl', 'Stop loss', o.sl, 'sl')}${field('tp', 'Take profit', o.tp, 'tp')}</div>
+      ${sg ? `<div class="chips-row">${o.sl == null || Math.abs(o.sl - sg.sl) > 0.01 ? `<button type="button" class="chip-b" id="sg-sl">Stop ${sg.slWhy} · ${fmt(sg.sl)}</button>` : ''}${sg.tp != null && (o.tp == null || Math.abs(o.tp - sg.tp) > 0.01) ? `<button type="button" class="chip-b" id="sg-tp">TP: ${sg.tpWhy} · ${fmt(sg.tp)}</button>` : ''}</div>` : ''}
+      <div class="risk-row"><span>Riesgo</span>${[0.5, 0.6, 0.7].map((r) => `<button type="button" class="rk ${Math.abs(o.risk - r) < 1e-9 ? 'on' : ''}" data-r="${r}">${String(r).replace('.', ',')} %</button>`).join('')}</div>
+      <div class="sum">
+        <span><small>Stop</small><b>${k.stopPts ? k.stopPts.toLocaleString('es-ES') + ' pts' : '—'}</b></span>
+        <span><small>R:R</small><b class="${k.rr != null && k.rr < 1 ? 'neg' : ''}">${k.rr != null ? '1:' + k.rr.toLocaleString('es-ES', { maximumFractionDigits: 2 }) : '—'}</b></span>
+        <span><small>Contratos</small><b>${k.qty || '—'} ${SIM.inst}</b></span>
+        <span><small>Riesgo real</small><b>${k.qty ? Math.round(k.qty * k.stopPts * k.pv).toLocaleString('es-ES') + ' $' : '—'}</b></span>
       </div>
       ${k.err ? `<p class="bad-msg">${k.err}</p>` : ''}
-      <div class="row"><button class="btn pri" type="submit" ${!k.err && o.sl != null && o.tp != null ? '' : 'disabled'}>Confirmar orden</button><button class="btn ghost" type="button" id="o-cancel">Cancelar</button></div>
+      <button class="btn ${buy ? 'buy' : 'sell'} wide" type="submit" ${!k.err && o.sl != null && o.tp != null ? '' : 'disabled'}>Confirmar ${buy ? 'compra' : 'venta'}</button>
     </form>`;
-    const upd = () => { o.sl = $('#o-sl').value === '' ? null : E.rt(+$('#o-sl').value); o.tp = $('#o-tp').value === '' ? null : E.rt(+$('#o-tp').value); o.risk = Math.max(0.05, +$('#o-risk').value || 0.5); SIM.risk = o.risk; simDraw(); };
-    ['#o-sl', '#o-tp', '#o-risk'].forEach((q) => $(q).addEventListener('change', upd));
+    const set = (f, v) => { o[f] = v == null ? null : E.rt(v); simDraw(); };
+    host.querySelectorAll('.st-b').forEach((b) => b.onclick = () => {
+      const f = b.dataset.f, d = +b.dataset.d, base = o[f] ?? (f === 'sl' ? o.entry - o.dir * 10 : o.entry + o.dir * 10);
+      buzz(8); set(f, base + d);
+    });
+    ['sl', 'tp'].forEach((f) => $('#o-' + f).addEventListener('change', (e) => set(f, num(e.target.value))));
+    host.querySelectorAll('.rk').forEach((b) => b.onclick = () => { o.risk = +b.dataset.r; SIM.risk = o.risk; simDraw(); });
+    if ($('#sg-sl')) $('#sg-sl').onclick = () => set('sl', sg.sl);
+    if ($('#sg-tp')) $('#sg-tp').onclick = () => set('tp', sg.tp);
     $('#o-cancel').onclick = () => { SIM.order = null; simDraw(); };
     $('#ord').addEventListener('submit', (e) => {
       e.preventDefault();
       const kk = orderCalc(o); if (kk.err || o.sl == null || o.tp == null) return;
       SIM.trades.push({ t: SIM.t, dir: o.dir, entry: o.entry, sl: o.sl, tp: o.tp, qty: kk.qty, riskPct: kk.realPct, usdPerR: kk.qty * kk.stopPts * kk.pv });
-      SIM.order = null; simDraw();
+      SIM.order = null; buzz(25); simDraw();
     });
   }
   function simFinish() {

@@ -23,13 +23,16 @@
 
   // Gráfico de velas. o: {n, slots, h, times, t0, ann, onPick, cross, axis, minBw, maxBw, dec}
   function candles(host, C, o = {}) {
+    // medir antes de vaciar: leer el tamaño con el contenedor vacío acorta la página y mueve el scroll
+    const cw0 = host.clientWidth;
+    host.style.minHeight = host.offsetHeight ? host.offsetHeight + 'px' : '';
     host.innerHTML = '';
     const n = Math.min(o.n ?? C.length, C.length);
     const slots = Math.max(o.slots ?? n, n);
     const H = o.h ?? 300;
     const axisW = o.axis === false ? 6 : 60;
     const padT = 12, padB = o.times ? 24 : 10;
-    const cw = host.clientWidth || 640;
+    const cw = cw0 || 640;
     const bw = Math.min(o.maxBw ?? 30, Math.max(o.minBw ?? 5, (cw - axisW - 8) / slots));
     const W = Math.max(Math.floor(cw), Math.ceil(slots * bw + axisW + 8));
     let lo = Infinity, hi = -Infinity;
@@ -126,6 +129,7 @@
         s('text', { x: x(a.i), y: y(a.p), class: 'lbl num', 'text-anchor': 'middle', style: `fill:${c}`, text: a.t }, over);
       }
     }
+    host.style.minHeight = '';
     const api = { svg, x, y, bw, W, H, hi, lo, n, slots };
     if (o.onPick || o.cross) {
       const ch = s('line', { x1: 0, x2: plotR, y1: -10, y2: -10, style: 'stroke:var(--ink-2);stroke-width:1;stroke-dasharray:2 3;pointer-events:none' }, svg);
@@ -153,8 +157,9 @@
 
   // Gráfico de líneas (curvas de capital, etc.)
   function lines(host, series, o = {}) {
+    const cw0 = host.clientWidth;
     host.innerHTML = '';
-    const H = o.h ?? 220, cw = host.clientWidth || 600, W = Math.max(280, cw);
+    const H = o.h ?? 220, cw = cw0 || 600, W = Math.max(280, cw);
     const padL = 8, padR = 64, padT = 14, padB = o.xlabel ? 26 : 12;
     let lo = Infinity, hi = -Infinity, len = 0;
     for (const se of series) { se.v.forEach((v) => { lo = Math.min(lo, v); hi = Math.max(hi, v); }); len = Math.max(len, se.v.length); }

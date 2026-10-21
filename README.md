@@ -1,6 +1,6 @@
 # Laboratorio IFVG
 
-App web para aprender trading con la estrategia del **Esses Bootcamp** de Fede Esses: toma de liquidez + IFVG + objetivo claro, en la sesión de Nueva York AM (9:30–11:00) o en la asiática (20:00–21:30).
+App web para aprender trading con la estrategia de un **bootcamp de trading** en YouTube: toma de liquidez + IFVG + objetivo claro, en la sesión de Nueva York AM (9:30–11:00) o en la asiática (20:00–21:30).
 
 > Material educativo no oficial. Los gráficos de práctica y del simulador se generan por simulación; no son datos reales del mercado. Operar futuros con apalancamiento implica riesgo de pérdida.
 

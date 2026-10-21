@@ -5,7 +5,7 @@ Object.assign(window.THEORY, {
     secs: [
       { h: 'Qué vas a construir en 50 días', p: 'El objetivo del bootcamp no es memorizar conceptos, sino tener un proceso que puedas repetir cada mañana sin pensar: preparar el gráfico, esperar la ventana, reconocer uno de los tres modelos, ejecutar con el riesgo fijo y registrar el resultado. Cada fase de la ruta añade una pieza de ese proceso.' },
       { h: 'Por qué una sola estrategia', p: 'Cuando cambias de estrategia cada semana nunca acumulas suficientes operaciones para saber si funciona ni para dominarla. Con una sola estrategia cada sesión suma experiencia sobre lo mismo: aprendes en qué días aparece, cómo se ve cuando falla y cuánto ganas o pierdes de media. Esa información es tu ventaja.' },
-      { h: 'Los tres pilares', p: 'La estrategia (toma de liquidez + IFVG + objetivo claro) es solo uno de tres pilares. Los otros dos son la gestión de riesgo (arriesgar siempre 0,5–0,7 %) y la psicología (respetar el plan aunque tengas ganas de saltártelo). Fede cuenta que llegó a perder 20 cuentas de fondeo con la misma estrategia por fallar en los otros dos.' },
+      { h: 'Los tres pilares', p: 'La estrategia (toma de liquidez + IFVG + objetivo claro) es solo uno de tres pilares. Los otros dos son la gestión de riesgo (arriesgar siempre 0,5–0,7 %) y la psicología (respetar el plan aunque tengas ganas de saltártelo). El mentor cuenta que llegó a perder 20 cuentas de fondeo con la misma estrategia por fallar en los otros dos.' },
       { h: 'Cómo usar esta app', p: 'Cada día: lee la teoría, mira los gráficos y aprueba el control. Después haz una ronda de práctica y una sesión en el simulador. La nota de disciplina del simulador es la medida más honesta de tu progreso: dice si seguiste el plan, no si tuviste suerte.' },
     ],
     err: ['Saltar a la estrategia sin entender el contexto ni el riesgo.', 'Medir el progreso en dinero en lugar de en ejecución.', 'Ver muchos videos y no practicar nunca.'],
@@ -25,7 +25,7 @@ Object.assign(window.THEORY, {
     secs: [
       { h: 'Esperar es parte del trabajo', p: 'De los 90 minutos de la ventana, la mayor parte se pasa esperando. Primero esperas que abra el mercado, luego que haya una toma de liquidez y luego que una vela cierre invalidando un FVG. Entrar antes de cualquiera de esos pasos es adivinar.', dg: 'patience' },
       { h: 'El cierre de la vela manda', p: 'Muchas entradas malas vienen de entrar cuando la vela todavía se está formando. Una vela de 1 minuto puede parecer que rompe el FVG y cerrar de vuelta dentro. La estrategia confirma con el cierre: espera a que termine el minuto.' },
-      { h: 'Días sin setup', p: 'Algunos días el mercado no manipula, o lo hace sin desplazamiento, o no deja un objetivo con R:R 1:1. Esos días no se opera. Fede lo dice claro: si el día tiene malas condiciones no tradea, y está bien. No operar es una decisión correcta, y en el simulador te da la nota máxima.', dg: 'notrade' },
+      { h: 'Días sin setup', p: 'Algunos días el mercado no manipula, o lo hace sin desplazamiento, o no deja un objetivo con R:R 1:1. Esos días no se opera. El mentor lo dice claro: si el día tiene malas condiciones no tradea, y está bien. No operar es una decisión correcta, y en el simulador te da la nota máxima.', dg: 'notrade' },
     ],
     err: ['Entrar “porque ya va a girar” sin el cierre de confirmación.', 'Bajar a temporalidades de segundos para buscar algo que hacer.', 'Operar fuera de la ventana para compensar un día sin setup.'],
     ej: 'A las 9:42 el precio barre el mínimo del pre-market. La vela siguiente sube con fuerza pero a las 9:43:40 todavía no cerró sobre el FVG. Esperas. Cierra a las 9:44 por encima: ese es el momento de entrar.',
@@ -35,7 +35,7 @@ Object.assign(window.THEORY, {
       { h: 'Dos herramientas distintas', p: 'La plataforma de gráficos (por ejemplo TradingView) sirve para analizar: marcar niveles, FVG y cambiar de temporalidad. El broker o la empresa de fondeo es donde se ejecuta la orden. Muchas plataformas permiten hacer las dos cosas, pero conviene saber qué hace cada una.' },
       { h: 'Valor del punto', p: 'Cada contrato de futuros tiene un valor por punto. Es la base para calcular cuánto arriesgas: puntos de stop × valor del punto × contratos. Los contratos micro (MNQ, MES) valen una décima parte y permiten ajustar el riesgo en cuentas pequeñas.', dg: 'platforms' },
       { h: 'El tick', p: 'El precio de los índices se mueve en saltos de 0,25 puntos (un tick). En NQ un tick vale 5 $ y en MNQ 0,50 $. Por eso los precios del simulador terminan en ,00 ,25 ,50 o ,75.' },
-      { h: 'Cuenta de fondeo', p: 'Una empresa de fondeo te deja operar su capital si pasas una evaluación respetando un límite de pérdida. Es lo que usa Fede. Lo verás en detalle en el día 40.' },
+      { h: 'Cuenta de fondeo', p: 'Una empresa de fondeo te deja operar su capital si pasas una evaluación respetando un límite de pérdida. Es lo que usa el mentor. Lo verás en detalle en el día 40.' },
     ],
     err: ['Calcular el riesgo sin saber el valor del punto del contrato.', 'Usar NQ en una cuenta pequeña y arriesgar de más.', 'Confundir ticks con puntos.'],
     ej: 'Stop de 20 puntos. Con 1 NQ arriesgas 20 × 20 $ = 400 $. Con 1 MNQ arriesgas 20 × 2 $ = 40 $. En una cuenta de 50.000 $ al 0,5 % (250 $), con MNQ puedes usar 6 contratos (240 $).',
@@ -52,7 +52,7 @@ Object.assign(window.THEORY, {
   6: {
     secs: [
       { h: 'El mercado tiene horarios de actividad', p: 'Los futuros abren casi 24 horas, pero el volumen se concentra en tres sesiones: Asia, Londres y Nueva York. La apertura de la bolsa de Nueva York a las 9:30 (hora NY) es el momento de más volatilidad del día para NQ y ES.', dg: 'sessions' },
-      { h: 'Las dos ventanas de Fede', p: 'Sesión NY AM de 9:30 a 11:00 y sesión asiática de 20:00 a 21:30, ambas en hora de Nueva York. La estrategia funciona en cualquiera de las dos; elige la que encaje con tu vida. Uno de los mentores de su comunidad opera solo Asia.' },
+      { h: 'Las dos ventanas del bootcamp', p: 'Sesión NY AM de 9:30 a 11:00 y sesión asiática de 20:00 a 21:30, ambas en hora de Nueva York. La estrategia funciona en cualquiera de las dos; elige la que encaje con tu vida. Uno de los mentores de su comunidad opera solo Asia.' },
       { h: 'Antes y después', p: 'Conéctate 15 minutos antes para marcar los niveles del pre-market y revisar noticias. Cuando termina la ventana, cierras los gráficos aunque no hayas operado. Fuera de la ventana el mercado se mueve con menos intención y las señales son peores.' },
       { h: 'Hora de tu país', p: 'Convierte la hora de Nueva York a la tuya y ten en cuenta los cambios de horario de verano, que no ocurren en las mismas fechas en todos los países. Un error de una hora te hace operar en el momento equivocado.' },
     ],
@@ -155,7 +155,7 @@ Object.assign(window.THEORY, {
     secs: [
       { h: 'El stop loss', p: 'Va detrás del extremo de la manipulación: debajo del mínimo barrido en compras y encima del máximo barrido en ventas, con un margen de uno o dos puntos. Si el precio vuelve allí, la idea estaba equivocada.', dg: 'sltp' },
       { h: 'El take profit', p: 'Va en un objetivo claro en la dirección del trade: liquidez sin tomar (un máximo o mínimo que el precio todavía no superó, como el del pre-market) o un FVG sin rellenar. Si el primer objetivo no da al menos 1:1, no hay trade.' },
-      { h: 'Break even', p: 'Cuando el precio alcanza el primer máximo o mínimo intermedio que no es tu objetivo, Fede suele mover el stop a la entrada. Desde ese momento la operación no puede terminar en pérdida. En el simulador tienes el botón “Stop a break even”.', dg: 'be' },
+      { h: 'Break even', p: 'Cuando el precio alcanza el primer máximo o mínimo intermedio que no es tu objetivo, el mentor suele mover el stop a la entrada. Desde ese momento la operación no puede terminar en pérdida. En el simulador tienes el botón “Stop a break even”.', dg: 'be' },
       { h: 'No se toca después', p: 'Una vez dentro, el stop solo se mueve a favor (break even). Alejarlo cuando el precio se acerca convierte una pérdida pequeña en una grande.' },
     ],
     err: ['Stop justo en el nivel barrido, sin margen.', 'TP “a ojo” sin liquidez ni FVG.', 'Mover a break even demasiado pronto, antes de un máximo intermedio.'],
