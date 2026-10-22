@@ -4,7 +4,7 @@
   const OPEN = 30;        // índice de la vela de las 9:30 (la sesión arranca 9:00)
   const WIN_END = 120;    // 11:00, fin de la ventana operativa
   const BARS = 140;       // hasta 11:20
-  const T0 = 9 * 60;      // minuto del día de la vela 0
+  let T0 = 9 * 60;        // minuto del día de la vela 0 (9:00 NY AM · 19:30 Asia)
 
   function rng(seed) {
     let a = seed >>> 0;
@@ -70,7 +70,7 @@
 
   // ---------- Generador de sesión NY AM ----------
   // kind: 'm1' | 'm2' | 'm3' | 'none'
-  function genSession(seed, forceKind) {
+  function genSession(seed, forceKind, opt = {}) {
     const R = rng(seed * 7 + 13);
     const kinds = ['m1', 'm1', 'm2', 'm2', 'm3', 'm3', 'none'];
     const kind = forceKind || kinds[Math.floor(R() * kinds.length)];
@@ -137,7 +137,14 @@
     let C = b.c;
     if (flip) C = mirror(C, p0);
     const htf = genHTF(seed, kind === 'none' ? (R() < 0.5 ? 1 : -1) : (flip ? -1 : 1));
-    return { seed, kind, vol, C, htf, bias: htf.dir, scriptedWin: win };
+    // Asia se mueve menos; ES cotiza a otra escala (≈ 1/3,5 del NQ y movimientos más cortos)
+    const k = (opt.mkt === 'ES' ? 0.27 : 1) * (opt.sess === 'asia' ? 0.6 : 1);
+    if (k !== 1) {
+      const base = opt.mkt === 'ES' ? rt(5200 + R() * 900) : p0;
+      const sc = (x) => rt(base + (x - p0) * k);
+      C = C.map((b) => ({ o: sc(b.o), h: sc(b.h), l: sc(b.l), c: sc(b.c) }));
+    }
+    return { seed, kind, vol: vol * k, C, htf, bias: htf.dir, scriptedWin: win, mkt: opt.mkt || 'NQ', sess: opt.sess || 'ny' };
   }
 
   // Gráfico de 1H para el contexto (tendencia de temporalidad mayor)
@@ -361,8 +368,56 @@
   }
 
   const hhmm = (i) => { const m = T0 + i; return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
+  // Cambia el horario de las velas: NY AM (9:00–11:20) o Asia (19:30–21:50); la ventana operativa sigue en los índices 30–120
+  function setSession(name) { T0 = name === 'asia' ? 19 * 60 + 30 : 9 * 60; api.T0 = T0; }
+  // Sesión a partir de velas reales (140 velas de 1 minuto desde 30 min antes de la apertura)
+  function realSession(day, prevDays = []) {
+    const C = day.bars.map(([o, h, l, c]) => ({ o, h, l, c }));
+    const pts = [...prevDays.flatMap((d) => d.bars), ...day.bars.slice(0, OPEN)];
+    const H = [];
+    for (let i = 0; i < pts.length; i += 30) { const g = pts.slice(i, i + 30); if (g.length) H.push({ o: g[0][0], h: Math.max(...g.map((x) => x[1])), l: Math.min(...g.map((x) => x[2])), c: g[g.length - 1][3] }); }
+    const htfC = H.length >= 4 ? H : genHTF(1, 1).C;
+    const dir = htfC[htfC.length - 1].c >= htfC[0].o ? 1 : -1;
+    return { seed: 'real-' + day.date, kind: 'real', real: true, date: day.date, vol: avgRange(C), C, htf: { dir, C: htfC }, bias: dir, mkt: day.mkt || 'NQ', sess: day.sess || 'ny' };
+  }
+  // Lee un CSV exportado de TradingView (time, open, high, low, close) y devuelve las sesiones completas
+  function parseCSV(text, mkt = 'NQ') {
+    const lines = text.trim().split(/\r?\n/); if (lines.length < 50) return [];
+    const head = lines[0].toLowerCase().split(/[,;]/).map((x) => x.trim().replace(/"/g, ''));
+    const ix = (n) => head.findIndex((h) => h === n || h.startsWith(n));
+    const it = ix('time'), io = ix('open'), ih = ix('high'), il = ix('low'), ic = ix('close');
+    if ([it, io, ih, il, ic].some((x) => x < 0)) return [];
+    const fmtNY = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+    const byDay = {};
+    for (const ln of lines.slice(1)) {
+      const f = ln.split(/[,;]/).map((x) => x.trim().replace(/"/g, ''));
+      let tv = f[it]; const num = +tv;
+      const d = isFinite(num) && tv !== '' ? new Date(num > 1e12 ? num : num * 1000) : new Date(tv);
+      if (isNaN(d)) continue;
+      const P = Object.fromEntries(fmtNY.formatToParts(d).map((x) => [x.type, x.value]));
+      const day = `${P.year}-${P.month}-${P.day}`, min = (+P.hour % 24) * 60 + +P.minute;
+      const bar = [+f[io], +f[ih], +f[il], +f[ic]].map(rt);
+      if (bar.some((x) => !isFinite(x))) continue;
+      (byDay[day] = byDay[day] || {})[min] = bar;
+    }
+    const out = [];
+    for (const [date, mins] of Object.entries(byDay)) {
+      for (const [sess, start] of [['ny', 9 * 60], ['asia', 19 * 60 + 30]]) {
+        let have = 0, last = null; const bars = [];
+        for (let i = 0; i < BARS; i++) {
+          const b = mins[start + i];
+          if (b) { have++; last = b; bars.push(b); } else if (last) bars.push([last[3], last[3], last[3], last[3]]); else bars.push(null);
+        }
+        const first = bars.find(Boolean);
+        if (have < 110 || !first) continue;
+        for (let i = 0; i < BARS; i++) if (!bars[i]) bars[i] = [first[0], first[0], first[0], first[0]];
+        out.push({ date, sess, mkt, bars });
+      }
+    }
+    return out.sort((a, b) => a.date.localeCompare(b.date));
+  }
   const fmt = (p) => p.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const api = { agg, avgRange, rng, rt, Builder, genSession, genHTF, fvgs, ifvgs, swings, levels, sweeps, targets, setupAt, firstSetup, runTrade, gradeTrade, hhmm, fmt, mirror, OPEN, WIN_END, BARS, T0, TICK };
+  const api = { setSession, realSession, parseCSV, agg, avgRange, rng, rt, Builder, genSession, genHTF, fvgs, ifvgs, swings, levels, sweeps, targets, setupAt, firstSetup, runTrade, gradeTrade, hhmm, fmt, mirror, OPEN, WIN_END, BARS, T0, TICK };
   if (typeof module !== 'undefined') module.exports = api; else G.ENG = api;
 })(this);

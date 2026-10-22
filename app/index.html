@@ -37,7 +37,7 @@ body { margin: 0; } [hidden] { display: none !important; } img { max-width: 100%
 
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--f-body); letter-spacing: 0.003em; -webkit-font-smoothing: antialiased; }
-body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+html, body { overflow-x: clip; }
 a { color: var(--info); text-underline-offset: 3px; }
 h1, h2, h3 { line-height: 1.15; text-wrap: balance; margin: 0; letter-spacing: -0.02em; font-weight: 500; }
 h1 { font-size: clamp(28px, 6vw, 36px); }
@@ -70,7 +70,7 @@ svg .cdl { animation: cdl .45s var(--ease) backwards; transform-box: fill-box; t
 svg .ln { stroke-dasharray: 1; stroke-dashoffset: 0; animation: draw 1.3s ease-out backwards; }
 
 /* Barra superior y navegación */
-.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.top { position: sticky; top: var(--stick, 0px); padding-top: var(--sat, env(safe-area-inset-top, 0px)); z-index: 5; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 .top-in { max-width: 1040px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .brand { display: contents; }
 .brand a.logo { display: flex; align-items: center; gap: 9px; text-decoration: none; color: var(--ink); }
@@ -100,6 +100,10 @@ main.out { opacity: 0; transform: translateY(-6px); }
   .nav a svg { display: block; transition: transform .3s cubic-bezier(.3, .9, .2, 1); }
   .nav a[aria-current="page"] svg { transform: translateY(-1px) scale(1.06); }
   .nav-ind { border-radius: 18px; }
+  .nav { transform: translateZ(0); }
+  .nav::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 140px; background: var(--surface); }
+  body.in-sim .nav { display: none; }
+  body.in-sim main { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important; }
   main { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important; }
 }
 body.onb .top, body.onb .nav { display: none; }
@@ -372,6 +376,7 @@ input[type=number], select, textarea { font: 15px var(--f-body); padding: 12px 1
 .form-grid label.chk { display: flex; align-items: center; gap: 8px; color: var(--ink); }
 .order-sum { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 13px; }
 details.panel summary { cursor: pointer; font-weight: 500; }
+details.card > summary { cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; min-height: 40px; }
 .result { animation: rise .5s var(--ease) backwards; }
 .result .res-head { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
 .result .res-head > div:last-child { flex: 1; min-width: 220px; display: grid; gap: 4px; }
@@ -596,6 +601,76 @@ button, .btn, a, .opt, .day, .act, .excard { touch-action: manipulation; -webkit
   .sx-scrim { display: block; position: fixed; inset: 0; z-index: 11; background: rgba(6, 6, 8, .55); opacity: 0; pointer-events: none; transition: opacity .3s; }
   .sx.side-open .sx-scrim { opacity: 1; pointer-events: auto; }
 }
+/* Hoy: plan, check-in y repaso */
+#hdr-streak:not(.on) { display: none; }
+.chip.streak.on { color: var(--on-accent); background: var(--accent); }
+.plan-list { display: grid; gap: 8px; margin-top: 12px; }
+.plan-item { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 18px; background: var(--soft); color: var(--ink); text-decoration: none; border: 0; font: inherit; text-align: left; cursor: pointer; width: 100%; transition: transform .15s var(--ease); }
+.plan-item:active { transform: scale(.98); }
+.plan-item .pn { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; border: 1.6px solid #4a4b50; }
+.plan-item.done .pn { background: var(--bull); border-color: var(--bull); color: var(--on-accent); }
+.plan-item .pt { display: grid; min-width: 0; line-height: 1.35; }
+.plan-item .pt small { font-size: 12px; color: var(--ink-2); }
+.plan-item .pt b { font-weight: 600; font-size: 15.5px; }
+.plan-item .pt em { font-style: normal; font-size: 13px; color: var(--accent); }
+.plan-item .pc { font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+.plan-item.done .pc { color: var(--bull); }
+.ck-q { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.ck-q:last-child { border-bottom: 0; }
+.yn { display: flex; gap: 4px; padding: 3px; border-radius: 999px; background: var(--soft); flex: none; }
+.yn button, .seg button { font: 600 13.5px/1 var(--f-body); min-height: 38px; padding: 0 14px; border-radius: 999px; border: 0; background: none; color: var(--ink-2); cursor: pointer; }
+.yn button.on, .seg button.on { background: var(--ink); color: var(--bg); }
+.yn button.on.no { background: var(--bear); color: var(--on-accent); }
+.warn-box, .ok-box { margin: 10px 0 0; padding: 12px 14px; border-radius: 16px; font-size: 15px; line-height: 1.5; }
+.warn-box { background: var(--bad-bg); color: #f6d9e6; }
+.ok-box { background: var(--good-bg); color: #dcebd7; }
+.backup-nag { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; border: 1px solid var(--mid-bg); }
+.backup-nag p { margin: 4px 0 0; }
+/* Aprender y glosario */
+.quick2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.search { width: 100%; font: 16px var(--f-body); padding: 13px 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--soft); color: var(--ink); }
+.glist { display: grid; gap: 8px; margin-top: 12px; }
+.gitem { padding: 13px 14px; border-radius: 16px; background: var(--soft); display: grid; gap: 4px; }
+.gitem b { font-weight: 600; font-size: 15.5px; }
+.gitem p { margin: 0; font-size: 14.5px; line-height: 1.5; color: #dcdde0; }
+.gitem a { font-size: 13px; }
+/* Practicar */
+.sim-card { display: grid; gap: 12px; }
+.seg-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; color: var(--ink-2); }
+.seg { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--soft); }
+.seg button:disabled { opacity: .4; cursor: default; }
+.sec-t { margin-top: 6px; }
+.excard.rec { outline: 1.5px solid var(--accent); }
+.rec-tag { justify-self: start; font-size: 11.5px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: var(--accent); color: var(--on-accent); }
+.choices { flex-wrap: wrap; }
+.sx-replay { display: grid; gap: 10px; padding: 14px 16px; border-radius: 20px; background: var(--surface); }
+.sx-replay p { margin: 0; font-size: 15px; line-height: 1.55; }
+.rp-head { display: flex; justify-content: space-between; align-items: center; }
+/* Progreso */
+.ladder { display: flex; gap: 6px; margin: 10px 0; }
+.ladder span { flex: 1; height: 30px; border-radius: 10px; display: grid; place-items: center; font-size: 13px; font-weight: 600; background: var(--soft); color: var(--ink-2); }
+.ladder span.on { background: var(--accent); color: var(--on-accent); }
+.hbars { display: grid; gap: 10px; margin-top: 10px; }
+.hb { display: grid; grid-template-columns: minmax(84px, 34%) minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 13.5px; }
+.hb-l { color: #dcdde0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hb-t { height: 10px; border-radius: 999px; background: var(--soft); overflow: hidden; }
+.hb-t i { display: block; height: 100%; border-radius: 999px; background: var(--info); }
+.hb-t i.g { background: var(--bull); } .hb-t i.p { background: var(--bear); } .hb-t i.y { background: var(--accent); }
+.hb-v { font: 500 12.5px var(--f-mono); white-space: nowrap; }
+.sub-t { margin-top: 18px; font-size: 15px; }
+.rows2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.rows2 > div { padding: 14px; border-radius: 16px; background: var(--soft); display: grid; gap: 4px; }
+.rows2 b { font: 600 26px var(--f-mono); }
+.rows2 span { font-size: 13.5px; color: #dcdde0; line-height: 1.4; }
+.jlist { display: grid; gap: 8px; margin-top: 10px; }
+.jrow { padding: 12px 14px; border-radius: 16px; background: var(--soft); display: grid; gap: 6px; min-width: 0; }
+.jr-top, .jr-mid { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.jr-top span:first-child { font-size: 12.5px; }
+.jr-mid { align-items: flex-start; font-size: 14.5px; line-height: 1.45; }
+.jr-mid span { min-width: 0; overflow-wrap: anywhere; }
+.jr-mid b.pos { color: var(--bull); } .jr-mid b.neg { color: var(--bear); }
+.jr-note { margin: 0; font-size: 13.5px; color: var(--ink-2); font-style: italic; }
+@media (max-width: 400px) { .quick2 { grid-template-columns: 1fr; } .rows2 b { font-size: 22px; } #hdr-streak.on ~ #hdr-level { display: none; } .plan-item { grid-template-columns: 34px minmax(0, 1fr) 14px; } .plan-item .pc { font-size: 0; } .plan-item .pc::after { content: '›'; font-size: 20px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -627,14 +702,13 @@ button, .btn, a, .opt, .day, .act, .excard { touch-action: manipulation; -webkit
     </div>
     <nav class="nav" aria-label="Secciones">
       <span class="nav-ind" aria-hidden="true"></span>
-      <a href="#inicio" data-v="inicio"><svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><path d="M3 10l8-6 8 6v8H3z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>Inicio</a>
-      <a href="#ruta" data-v="ruta"><svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><path d="M4 18c4-8 10 0 14-12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Ruta</a>
-      <a href="#estrategia" data-v="estrategia"><svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><path d="M4 4h14v14H4zM8 11l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg>Estrategia</a>
-      <a href="#practica" data-v="practica"><svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 3v16M3 11h16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Práctica</a>
-      <a href="#simulador" data-v="simulador"><svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><path d="M6 5v12M6 8h2v6H6M15 3v14M15 6h2v7h-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Simulador</a>
-      <a href="#diario" data-v="diario"><svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><path d="M5 3h10l3 3v13H5zM8 9h7M8 13h7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg>Diario</a>
+      <a href="#inicio" data-v="inicio"><svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="7.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M11 7v4l3 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Hoy</a>
+      <a href="#ruta" data-v="ruta"><svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><path d="M3 5c3-1 6-1 8 1 2-2 5-2 8-1v12c-3-1-6-1-8 1-2-2-5-2-8-1zM11 6v12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>Aprender</a>
+      <a href="#practica" data-v="practica"><svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><path d="M6 5v12M6 8h2v6H6M15 3v14M15 6h2v7h-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Practicar</a>
+      <a href="#diario" data-v="diario"><svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><path d="M4 18V12M9 18V8M14 18v-4M19 18V5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>Progreso</a>
     </nav>
     <div class="chips">
+      <span class="chip streak" id="hdr-streak">Racha 0</span>
       <span class="chip acc" id="hdr-level">Nivel 1 · Novato</span>
       <span class="chip mono" id="hdr-xp">0 XP</span>
     </div>
@@ -648,6 +722,7 @@ button, .btn, a, .opt, .day, .act, .excard { touch-action: manipulation; -webkit
 <script src="teoria2.js"></script>
 <script src="teoria3.js"></script>
 <script src="diagrams.js"></script>
+<script src="glosario.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
