@@ -26,7 +26,7 @@
   }
   // Repaso espaciado: cada día aprobado vuelve a preguntarse a los 1, 2, 4, 8… días
   const DAY = 864e5;
-  const schedule = (d, ok) => { const r = S.rev[d] || { iv: 1 }; const iv = ok ? Math.min(30, (r.iv || 1) * 2) : 1; S.rev[d] = { iv, due: Date.now() + iv * DAY }; };
+  const schedule = (d, ok) => { const r = S.rev[d] || { iv: 1 }; const iv = ok ? Math.min(30, (r.iv || 1) * 2) : 1; const due = new Date(); due.setHours(0, 0, 0, 0); due.setDate(due.getDate() + iv); S.rev[d] = { iv, due: +due }; };
   const dueReviews = () => Object.entries(S.rev).filter(([, r]) => r.due <= Date.now()).map(([d]) => +d);
 
   // ---------- Niveles ----------
@@ -221,7 +221,10 @@
       const Q = pick.map((d) => { const L = window.LESSONS.find((l) => l.d === d); const q = L.q[Math.floor(Math.random() * L.q.length)]; return { ...q, q: `Día ${d} · ${q.q}` }; });
       const rv = H(`<section class="card"><div class="card-head"><h2>Repaso de 2 minutos</h2><span class="pill mid">${due.length} pendiente${due.length > 1 ? 's' : ''}</span></div><p class="muted small">Preguntas de días que ya aprobaste. Repasar justo antes de olvidar fija lo aprendido.</p><div id="rev"></div></section>`);
       m.appendChild(rv);
+      let revDone = false;
       quiz($('#rev'), Q, (ok, total) => {
+        if (revDone) return `<p class="muted small">Repaso ya registrado. Vuelve mañana.</p>`;
+        revDone = true;
         $('#rev').querySelectorAll('fieldset').forEach((fs, i) => schedule(pick[i], fs.classList.contains('good')));
         mark('review'); addXP(ok * 3); save();
         return `<p class="${ok === total ? 'ok-msg' : 'bad-msg'}">${ok}/${total}. ${ok === total ? 'Volverán a aparecer más adelante.' : 'Las falladas vuelven mañana.'}</p>`;
@@ -304,9 +307,9 @@
     quiz($('#quiz'), L.q, (ok, total, firstTry) => {
       const prev = S.lessons[L.d] || {};
       if (ok === total) {
-        if (!prev.passed) { addXP(20 + (firstTry ? 10 : 0)); S.rev[L.d] = { iv: 1, due: Date.now() + DAY }; }
-        S.lessons[L.d] = { passed: true, at: Date.now() };
-        mark('lesson'); save();
+        if (!prev.passed) { addXP(20 + (firstTry ? 10 : 0)); schedule(L.d, false); mark('lesson'); }
+        S.lessons[L.d] = { passed: true, at: prev.at || Date.now() };
+        save();
         return L.d < 50 ? `<p class="ok-msg">Día ${L.d} completado. <a href="#dia${L.d + 1}">Seguir con el día ${L.d + 1}</a></p>` : '<p class="ok-msg">Terminaste el bootcamp. Ahora: examen final y sesiones simuladas.</p>';
       }
       return `<p class="bad-msg">${ok}/${total}. Repasa la teoría y vuelve a intentarlo.</p>`;
@@ -383,7 +386,7 @@
     const realN = (S.real || []).filter((d) => d.sess === cfg.sess && d.mkt === cfg.mkt).length;
     m.appendChild(H(`<header class="page-head"><h1>Practicar</h1><p class="lead">Ejercicios de 5 preguntas y sesiones simuladas, corregidos con las reglas de la estrategia.</p></header>`));
     const sc = H(`<section class="card sim-card">
-      <div class="card-head"><h2>Sesión simulada</h2>${inProg ? `<span class="pill mid">En curso · ${E.hhmm(SIM.t)}</span>` : ''}</div>
+      <div class="card-head"><h2>Sesión simulada</h2>${inProg ? `<span class="pill mid">En curso · ${hm(SIM.t, SIM.S.sess)}</span>` : ''}</div>
       <div class="seg-row"><span>Sesión</span><div class="seg" data-k="sess"><button type="button" data-v="ny" class="${cfg.sess === 'ny' ? 'on' : ''}">NY AM 9:30</button><button type="button" data-v="asia" class="${cfg.sess === 'asia' ? 'on' : ''}">Asia 20:00</button></div></div>
       <div class="seg-row"><span>Mercado</span><div class="seg" data-k="mkt"><button type="button" data-v="NQ" class="${cfg.mkt === 'NQ' ? 'on' : ''}">Nasdaq NQ</button><button type="button" data-v="ES" class="${cfg.mkt === 'ES' ? 'on' : ''}">S&amp;P ES</button></div></div>
       <div class="seg-row"><span>Datos</span><div class="seg" data-k="real"><button type="button" data-v="0" class="${!cfg.real ? 'on' : ''}">Simulados</button><button type="button" data-v="1" class="${cfg.real ? 'on' : ''}" ${realN ? '' : 'disabled'}>Reales (${realN})</button></div></div>
@@ -523,13 +526,13 @@
   function exRun(m) {
     const meta = EXS.find((x) => x.id === EX.id);
     for (let k = 0; k < 3 && !EX.round; k++) EX.round = makeRound(EX.id);
-    if (!EX.round) { m.appendChild(H('<section class="card"><p>No se pudo generar este ejercicio. Vuelve a intentarlo.</p><a class="btn" href="#practica">Volver</a></section>')); EX = null; return; }
+    if (!EX.round) { m.appendChild(H('<section class="card"><p>No se pudo generar este ejercicio. Vuelve a intentarlo.</p><button class="btn" type="button" id="ex-fail">Volver</button></section>')); EX = null; $('#ex-fail').onclick = () => render(); return; }
     const R = EX.round;
     const el = H(`<section class="exrun"><nav class="crumbs"><a href="#practica" id="ex-back">Práctica</a> / ${meta.t}</nav>
       <div class="exbar"><b>Ejercicio ${EX.k + 1} de 5</b><span>Aciertos: ${EX.ok}</span></div>
       <h2 class="prompt">${esc(R.prompt)}</h2><div class="dg-chart" id="ex-chart"></div><div id="ex-input"></div><div id="ex-fb" class="fb" aria-live="polite"></div></section>`);
     m.appendChild(el);
-    $('#ex-back').addEventListener('click', () => { EX = null; });
+    $('#ex-back').addEventListener('click', (e) => { e.preventDefault(); EX = null; render(); });
     let answered = false;
     const draw = (extra = []) => { if (R.C) CH.candles($('#ex-chart'), R.C, { ann: [...(R.ann || []), ...extra].map((x) => shift(x, R.a)), times: true, t0: R.a, h: 300, slots: R.slots, onPick: answered ? null : pick, cross: true, minBw: 7 }); };
     const shift = (x, a) => { const y = { ...x }; for (const k of ['i', 'i0', 'i1']) if (y[k] != null) y[k] -= a; return y; };
@@ -575,7 +578,7 @@
       <div class="row center"><button class="btn pri" id="again" type="button">Otra ronda</button><a class="btn" href="#practica" id="back2">Volver</a></div></section>`));
     const id = EX.id;
     $('#again').addEventListener('click', () => { EX = { active: true, id, k: 0, ok: 0, round: null }; render(); });
-    $('#back2').addEventListener('click', () => { EX = null; });
+    $('#back2').addEventListener('click', (e) => { e.preventDefault(); EX = null; render(); });
     EX = null;
   }
 
@@ -628,7 +631,7 @@
         <details class="settings"><summary>Cuenta y ayudas</summary>
           <div class="form-grid">
             <label for="s-acct">Cuenta ($)<input id="s-acct" type="number" step="1000" min="5000" value="${SIM.acct}"></label>
-            <label for="s-inst">Contrato<select id="s-inst">${Object.keys(INST).map((k) => `<option ${k === SIM.inst ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
+            <label for="s-inst">Contrato<select id="s-inst">${Object.keys(INST).filter((k) => k.slice(-2) === (SIM.S.mkt === 'ES' ? 'ES' : 'NQ')).map((k) => `<option ${k === SIM.inst ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
             <label class="chk" for="s-assist"><input id="s-assist" type="checkbox" ${SIM.assist ? 'checked' : ''}> Ayudas: niveles, FVG, checklist y plan sugerido</label>
           </div></details>
       </aside>
@@ -658,7 +661,7 @@
   function simAnn() {
     const { S: Ss, t } = SIM, C = Ss.C, ann = [];
     const pm = C.slice(0, E.OPEN), PH = Math.max(...pm.map((b) => b.h)), PL = Math.min(...pm.map((b) => b.l));
-    ann.push({ k: 'v', i: E.OPEN, c: 'mute', t: '9:30' }, { k: 'v', i: E.WIN_END, c: 'mute', t: '11:00' });
+    ann.push({ k: 'v', i: E.OPEN, c: 'mute', t: E.hhmm(E.OPEN) }, { k: 'v', i: E.WIN_END, c: 'mute', t: E.hhmm(E.WIN_END) });
     if (SIM.assist && !SIM.done) {
       ann.push({ k: 'h', p: PH, i0: 0, i1: E.BARS, c: 'acc', t: 'Máx. pre-market', noScale: true }, { k: 'h', p: PL, i0: 0, i1: E.BARS, c: 'acc', t: 'Mín. pre-market', below: true, noScale: true });
       // FVG de la temporalidad visible (solo velas cerradas); índices en minutos para el mapeo
@@ -706,7 +709,7 @@
     // el hueco del gráfico puede cambiar de alto después (primer pintado, giro, barra de Safari): redibujar al cambiar
     SIM.drawnH = h;
     if (wrap && !wrap.__ro && window.ResizeObserver) {
-      let rt; wrap.__ro = new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(() => { if (SIM && live() && document.contains(wrap) && wrap.clientHeight > 180 && Math.abs(wrap.clientHeight - SIM.drawnH) > 4) simDraw(); }, 60); });
+      let rt; wrap.__ro = new ResizeObserver(() => { if (!document.contains(wrap)) { wrap.__ro.disconnect(); return; } clearTimeout(rt); rt = setTimeout(() => { if (SIM && live() && document.contains(wrap) && wrap.clientHeight > 180 && Math.abs(wrap.clientHeight - SIM.drawnH) > 4) simDraw(); }, 60); });
       wrap.__ro.observe(wrap);
     }
     if (SIM.done) simResult();
@@ -718,7 +721,7 @@
     $('#sx-clock').textContent = E.hhmm(t);
     const w = $('#sx-win');
     w.className = inWin ? 'on' : '';
-    w.innerHTML = `<i></i>${t < E.OPEN ? 'Pre-market · abre 9:30' : inWin ? `Ventana abierta · quedan ${E.WIN_END - t} min` : 'Ventana cerrada'}`;
+    w.innerHTML = `<i></i>${t < E.OPEN ? `Pre-market · abre ${E.hhmm(E.OPEN)}` : inWin ? `Ventana abierta · quedan ${E.WIN_END - t} min` : 'Ventana cerrada'}`;
     $('#sx-price').textContent = fmt(b.c);
     const pct = (t / (E.BARS - 1) * 100).toFixed(2);
     $('#sx-fill').style.width = pct + '%'; $('#sx-knob').style.left = pct + '%';
@@ -741,7 +744,7 @@
     }
     const side = dir > 0 ? 'compras' : 'ventas';
     return [
-      [inWin ? 'ok' : 'no', 'Horario operativo', t < E.OPEN ? 'La ventana abre a las 9:30.' : inWin ? `Ventana abierta: quedan ${E.WIN_END - t} minutos.` : 'Ventana cerrada: ya no se opera.'],
+      [inWin ? 'ok' : 'no', 'Horario operativo', t < E.OPEN ? `La ventana abre a las ${E.hhmm(E.OPEN)}.` : inWin ? `Ventana abierta: quedan ${E.WIN_END - t} minutos.` : 'Ventana cerrada: ya no se opera.'],
       [s ? 'ok' : inWin ? 'wait' : 'no', 'Toma de liquidez', s ? `${E.hhmm(s.j)} barrió un ${s.level.type === 'L' ? 'mínimo' : 'máximo'}: buscas ${side}.` : 'Esperando que el precio barra un máximo o un mínimo.'],
       [iv.length ? 'ok' : s ? 'wait' : 'no', 'IFVG', iv.length ? `Una vela cerró invalidando el FVG a las ${E.hhmm(iv[iv.length - 1].t)}.` : s ? 'Espera el cierre que invalide un FVG.' : 'Primero tiene que haber toma de liquidez.'],
       [tgt ? 'ok' : s ? 'wait' : 'no', 'Objetivo claro', tgt ? `${tgt.kind} · R:R 1:${rr.toLocaleString('es-ES', { maximumFractionDigits: 1 })}.` : s ? 'Todavía no hay objetivo con R:R 1:1 o más.' : 'Se define después de la toma de liquidez.'],
@@ -819,7 +822,7 @@
           <span class="pnl ${R >= 0 ? 'pos' : 'neg'}"><b>${R >= 0 ? '+' : ''}${R.toLocaleString('es-ES', { maximumFractionDigits: 2, minimumFractionDigits: 2 })} R</b><small>${R >= 0 ? '+' : ''}${Math.round(R * op.usdPerR).toLocaleString('es-ES')} $</small></span></div>
         <div class="pos-bar" style="--e:${ePos}%"><i class="knob" style="left:${knob}%"></i></div>
         <div class="pos-lbl"><span>SL ${fmt(op.slNow ?? op.sl)}</span><span>TP ${fmt(op.tp)}</span></div>
-        <div class="sx-row"><button class="btn buy" id="sim-be" type="button" ${op.slNow === op.entry ? 'disabled' : ''}>Stop a break even</button><button class="btn sell" id="sim-close" type="button">Cerrar a mercado</button></div>
+        <div class="sx-row"><button class="btn buy" id="sim-be" type="button" ${op.slNow === op.entry || (SIM.S.C[SIM.t].c - op.entry) * op.dir <= 0 ? 'disabled' : ''} title="Solo con la operación en ganancia">Stop a break even</button><button class="btn sell" id="sim-close" type="button">Cerrar a mercado</button></div>
       </div>`;
     } else {
       const px = fmt(SIM.S.C[SIM.t].c);
@@ -834,7 +837,7 @@
     $('#sim-speed').onclick = () => { SIM.speed = sp === 1 ? 2 : sp === 2 ? 4 : 1; if (autoT) play(); simCtrl(); };
     $('#sim-end').onclick = () => simFinish();
     if (op) {
-      $('#sim-be').onclick = () => { op.slNow = op.entry; op.be = true; buzz(15); simDraw(); };
+      $('#sim-be').onclick = () => { if ((SIM.S.C[SIM.t].c - op.entry) * op.dir <= 0) return; op.slNow = op.entry; op.be = true; buzz(15); simDraw(); };
       $('#sim-close').onclick = () => { closeTrade(op, SIM.S.C[SIM.t].c, SIM.t, 'Cierre manual'); simDraw(); };
     } else {
       $('#sim-buy').onclick = () => openOrder(1);
@@ -850,7 +853,7 @@
       for (const tr of SIM.trades) {
         if (tr.exitI != null) continue;
         const sl = tr.slNow ?? tr.sl;
-        if (tr.dir > 0 ? b.l <= sl : b.h >= sl) closeTrade(tr, sl, SIM.t, sl === tr.entry ? 'Break even' : 'Stop loss');
+        if (tr.dir > 0 ? b.l <= sl : b.h >= sl) closeTrade(tr, tr.dir > 0 ? Math.min(sl, b.o) : Math.max(sl, b.o), SIM.t, sl === tr.entry ? 'Break even' : 'Stop loss'); // si abre más allá del stop, se ejecuta a la apertura
         else if (tr.dir > 0 ? b.h >= tr.tp : b.l <= tr.tp) closeTrade(tr, tr.tp, SIM.t, 'Take profit');
       }
       if (SIM.trades.some((x) => x.exitI === SIM.t)) { stopAuto(); break; }
@@ -922,7 +925,7 @@
     $('#ord').addEventListener('submit', (e) => {
       e.preventDefault();
       const kk = orderCalc(o); if (kk.err) return;
-      SIM.trades.push({ t: SIM.t, dir: o.dir, entry: o.entry, sl: o.sl, tp: o.tp, qty: kk.qty, riskPct: kk.realPct, usdPerR: kk.qty * kk.stopPts * kk.pv });
+      SIM.trades.push({ t: SIM.t, dir: o.dir, entry: o.entry, sl: o.sl, tp: o.tp, qty: kk.qty, riskPct: kk.realPct, riskSel: o.risk, usdPerR: kk.qty * kk.stopPts * kk.pv });
       SIM.order = null; SIM.warn = ''; buzz(25); simDraw();
     });
   }
@@ -949,9 +952,15 @@
     const zone = (a, b, cls) => { const el = H(`<i class="oz ${cls}"></i>`); el.style.top = Math.min(Y(a), Y(b)) + 'px'; el.style.height = Math.abs(Y(a) - Y(b)) + 'px'; over.appendChild(el); return el; };
     const zt = zone(o.entry, o.tp, 'tp'), zs = zone(o.entry, o.sl, 'sl');
     const eline = H('<i class="ol entry"><span>Entrada</span></i>'); eline.style.top = Y(o.entry) + 'px'; over.appendChild(eline);
+    // si stop y objetivo quedan muy juntos, separar sus etiquetas (las líneas siguen en su precio)
+    const sep = () => {
+      const pt = over.querySelector('.oh.tp .pill'), ps = over.querySelector('.oh.sl .pill'); if (!pt || !ps) return;
+      const d = Y(o.sl) - Y(o.tp), need = Math.max(0, 50 - Math.abs(d)) / 2, sg = d >= 0 ? 1 : -1;
+      pt.style.transform = need ? `translateY(${-sg * need}px)` : ''; ps.style.transform = need ? `translateY(${sg * need}px)` : '';
+    };
     const handle = (f, label) => {
       const el = H(`<div class="oh ${f}" role="group" aria-label="${label}"><i class="ol"></i><div class="pill"><button type="button" class="nud" data-d="1" aria-label="Subir ${label}">▲</button><span class="grab"><b>${f === 'sl' ? 'SL' : 'TP'}</b><span class="mono"></span></span><button type="button" class="nud" data-d="-1" aria-label="Bajar ${label}">▼</button></div></div>`);
-      const place = () => { el.style.top = Y(o[f]) + 'px'; el.querySelector('.mono').textContent = fmt(o[f]); zt.style.top = Math.min(Y(o.entry), Y(o.tp)) + 'px'; zt.style.height = Math.abs(Y(o.entry) - Y(o.tp)) + 'px'; zs.style.top = Math.min(Y(o.entry), Y(o.sl)) + 'px'; zs.style.height = Math.abs(Y(o.entry) - Y(o.sl)) + 'px'; };
+      const place = () => { queueMicrotask(sep); el.style.top = Y(o[f]) + 'px'; el.querySelector('.mono').textContent = fmt(o[f]); zt.style.top = Math.min(Y(o.entry), Y(o.tp)) + 'px'; zt.style.height = Math.abs(Y(o.entry) - Y(o.tp)) + 'px'; zs.style.top = Math.min(Y(o.entry), Y(o.sl)) + 'px'; zs.style.height = Math.abs(Y(o.entry) - Y(o.sl)) + 'px'; };
       el.querySelectorAll('.nud').forEach((b) => b.onclick = (e) => { e.stopPropagation(); o[f] = E.rt(o[f] + +b.dataset.d); buzz(6); place(); refreshOrderNums(); });
       const grab = el.querySelector('.grab');
       let drag = false;
@@ -967,7 +976,7 @@
       grab.addEventListener('pointerup', end); grab.addEventListener('pointercancel', end);
       over.appendChild(el); place();
     };
-    handle('tp', 'objetivo'); handle('sl', 'stop');
+    handle('tp', 'objetivo'); handle('sl', 'stop'); sep();
   }
 
   function simFinish() {
@@ -1013,7 +1022,7 @@
     const tr = SIM.trades[0];
     host.innerHTML = `<section class="panel result">
       <div class="res-head"><div class="score ${tier[1]}"><b>${grade.score}</b><span>/100 disciplina</span></div>
-        <div><h2>${tier[0]}</h2><p>${tr ? `${tr.dir > 0 ? 'Compra' : 'Venta'} a las ${E.hhmm(tr.t)} · ${tr.reason} · <b class="${outcome >= 0 ? 'pos' : 'neg'}">${outcome >= 0 ? '+' : ''}${outcome.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} R</b> (${(outcome * tr.usdPerR).toLocaleString('es-ES', { maximumFractionDigits: 0 })} $)` : 'Sin operaciones'}</p>
+        <div><h2>${tier[0]}</h2><p>${tr ? `${tr.dir > 0 ? 'Compra' : 'Venta'} a las ${E.hhmm(tr.t)} · ${tr.reason} · <b class="${outcome >= 0 ? 'pos' : 'neg'}">${outcome >= 0 ? '+' : ''}${outcome.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} R</b> (${SIM.trades.reduce((q, x) => q + (x.R || 0) * x.usdPerR, 0).toLocaleString('es-ES', { maximumFractionDigits: 0 })} $)` : 'Sin operaciones'}</p>
         <p class="muted small">La nota mide si seguiste el plan, no si ganaste. ${sys ? `El sistema detectó el primer setup a las ${E.hhmm(sys.t)} (Modelo ${sys.model}).` : 'El sistema no detectó setups válidos en la ventana.'}</p></div></div>
       <button class="btn pri wide" type="button" id="rp-start">Ver repetición guiada paso a paso</button>
       <ul class="grade">${grade.items.map((it) => `<li class="${it.ok ? 'ok' : it.pts > 0 ? 'mid' : 'no'}"><div><b>${it.label}</b><p>${esc(it.msg)}</p></div><span class="mono">${it.pts}/${it.max}</span></li>`).join('')}</ul>

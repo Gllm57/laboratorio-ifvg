@@ -304,8 +304,8 @@
     const add = (key, label, pts, max, msg) => items.push({ key, label, pts, max, ok: pts >= max, msg });
     const t = tr.t, dir = tr.dir;
     // 1. Horario operativo
-    add('time', 'Horario operativo (9:30–11:00)', t >= OPEN && t < WIN_END ? 15 : 0, 15,
-      t >= OPEN && t < WIN_END ? 'Entraste dentro de la ventana de la sesión.' : 'Entraste fuera de la ventana operativa. Fuera de 9:30–11:00 no se opera.');
+    add('time', `Horario operativo (${hhmm(OPEN)}–${hhmm(WIN_END)})`, t >= OPEN && t < WIN_END ? 15 : 0, 15,
+      t >= OPEN && t < WIN_END ? 'Entraste dentro de la ventana de la sesión.' : `Entraste fuera de la ventana operativa. Fuera de ${hhmm(OPEN)}–${hhmm(WIN_END)} no se opera.`);
     // 2. Toma de liquidez
     const sw = sweeps(C, t + 1).filter((s) => s.dir === dir && s.j >= t - 25 && s.j <= t);
     const s = sw[sw.length - 1];
@@ -345,9 +345,11 @@
     else tpMsg = `R:R 1:${rr.toFixed(2).replace('.', ',')}. Por debajo de 1:1 la operación no compensa el riesgo.`;
     add('tp', 'Objetivo claro y R:R ≥ 1', tpPts, 15, tpMsg);
     // 6. Riesgo
-    const rp = tr.riskPct;
-    add('risk', 'Riesgo 0,5–0,7 %', rp >= 0.45 && rp <= 0.75 ? 10 : rp <= 1 ? 5 : 0, 10,
-      rp >= 0.45 && rp <= 0.75 ? `Arriesgaste ${rp.toLocaleString('es-ES', { maximumFractionDigits: 2 })} % de la cuenta.` : `Arriesgaste ${rp.toLocaleString('es-ES', { maximumFractionDigits: 2 })} %. El plan dice 0,5–0,7 % por trade.`);
+    const rp = tr.riskPct, sel = tr.riskSel;
+    // si elegiste 0,5–0,7 % y el redondeo de contratos lo dejó por debajo, no es un error tuyo
+    const okRisk = (rp >= 0.45 && rp <= 0.75) || (sel >= 0.5 && sel <= 0.7 && rp > 0 && rp <= sel);
+    add('risk', 'Riesgo 0,5–0,7 %', okRisk ? 10 : rp <= 1 ? 5 : 0, 10,
+      okRisk ? `Arriesgaste ${rp.toLocaleString('es-ES', { maximumFractionDigits: 2 })} % de la cuenta.` : `Arriesgaste ${rp.toLocaleString('es-ES', { maximumFractionDigits: 2 })} %. El plan dice 0,5–0,7 % por trade.`);
     // 7. Un trade
     const one = (ctx?.tradeCount || 1) <= 1;
     add('one', 'Un trade por sesión', one ? 5 : 0, 5, one ? 'Un TP o un SL y te vas.' : 'Tomaste más de un trade en la sesión. Sobreoperar rompe el plan.');
@@ -383,21 +385,40 @@
   // Lee un CSV exportado de TradingView (time, open, high, low, close) y devuelve las sesiones completas
   function parseCSV(text, mkt = 'NQ') {
     const lines = text.trim().split(/\r?\n/); if (lines.length < 50) return [];
-    const head = lines[0].toLowerCase().split(/[,;]/).map((x) => x.trim().replace(/"/g, ''));
+    // separador: ';' si la cabecera lo usa (en ese caso los decimales pueden venir con coma), si no ',' o tabulador
+    const sep = lines[0].includes(';') ? ';' : lines[0].includes('\t') ? '\t' : ',';
+    const num = (x) => +(sep === ';' ? x.replace(/\./g, (m, i, str) => (str.includes(',') ? '' : m)).replace(',', '.') : x);
+    const head = lines[0].toLowerCase().split(sep).map((x) => x.trim().replace(/"/g, ''));
     const ix = (n) => head.findIndex((h) => h === n || h.startsWith(n));
-    const it = ix('time'), io = ix('open'), ih = ix('high'), il = ix('low'), ic = ix('close');
+    const io = ix('open'), ih = ix('high'), il = ix('low'), ic = ix('close');
+    let it = ix('time'); const idt = ix('date');
+    if (it < 0) it = idt;
     if ([it, io, ih, il, ic].some((x) => x < 0)) return [];
     const fmtNY = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+    // hora de pared de Nueva York (sin zona en el texto) → instante real, resolviendo el cambio de horario
+    const nyWall = (y, mo, d, h, mi) => {
+      let g = Date.UTC(y, mo - 1, d, h, mi);
+      for (let k = 0; k < 2; k++) { const P = Object.fromEntries(fmtNY.formatToParts(new Date(g)).map((x) => [x.type, x.value])); const seen = Date.UTC(+P.year, +P.month - 1, +P.day, +P.hour % 24, +P.minute); g += Date.UTC(y, mo - 1, d, h, mi) - seen; }
+      return new Date(g);
+    };
+    const parseT = (tv) => {
+      const n = +tv;
+      if (isFinite(n) && tv !== '') return new Date(n > 1e12 ? n : n * 1000);
+      const m = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})[ T](\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?\s*(Z|[+-]\d{2}:?\d{2})?$/i.exec(tv);
+      if (!m) return new Date(NaN);
+      if (m[6]) return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) - (m[6].toUpperCase() === 'Z' ? 0 : (m[6][0] === '-' ? -1 : 1) * (+m[6].slice(1, 3) * 60 + +m[6].slice(-2)) * 6e4));
+      return nyWall(+m[1], +m[2], +m[3], +m[4], +m[5]); // sin zona: se asume hora de Nueva York
+    };
     const byDay = {};
     for (const ln of lines.slice(1)) {
-      const f = ln.split(/[,;]/).map((x) => x.trim().replace(/"/g, ''));
-      let tv = f[it]; const num = +tv;
-      const d = isFinite(num) && tv !== '' ? new Date(num > 1e12 ? num : num * 1000) : new Date(tv);
+      const f = ln.split(sep).map((x) => x.trim().replace(/"/g, ''));
+      const tv = idt >= 0 && it !== idt ? `${f[idt]} ${f[it]}` : f[it];
+      const d = parseT(tv);
       if (isNaN(d)) continue;
       const P = Object.fromEntries(fmtNY.formatToParts(d).map((x) => [x.type, x.value]));
       const day = `${P.year}-${P.month}-${P.day}`, min = (+P.hour % 24) * 60 + +P.minute;
-      const bar = [+f[io], +f[ih], +f[il], +f[ic]].map(rt);
-      if (bar.some((x) => !isFinite(x))) continue;
+      const bar = [num(f[io]), num(f[ih]), num(f[il]), num(f[ic])].map(rt);
+      if (bar.some((x) => !isFinite(x)) || bar[1] < Math.max(bar[0], bar[3]) || bar[2] > Math.min(bar[0], bar[3])) continue;
       (byDay[day] = byDay[day] || {})[min] = bar;
     }
     const out = [];
