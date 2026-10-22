@@ -62,7 +62,7 @@
         const every = tf <= 3 ? 15 : tf <= 5 ? 30 : 60;
         if (m % every === 0) {
           s('line', { x1: x(i), x2: x(i), y1: padT, y2: H - padB, style: 'stroke:var(--grid);stroke-width:1' }, svg);
-          s('text', { x: x(i), y: H - 7, class: 'axis', 'text-anchor': 'middle', text: `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}` }, svg);
+          s('text', { x: x(i) < 18 ? Math.max(2, x(i) - 4) : x(i), y: H - 7, class: 'axis', 'text-anchor': x(i) < 18 ? 'start' : 'middle', text: `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}` }, svg);
         }
       }
     }

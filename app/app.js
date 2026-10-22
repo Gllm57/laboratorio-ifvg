@@ -129,7 +129,7 @@
     document.body.classList.add('onb');
     const sl = SLIDES[slide], last = slide === SLIDES.length - 1;
     const el = H(`<section class="welcome">
-      <div class="w-top"><span class="w-brand"><svg viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="lgw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c7cfb2"/><stop offset=".35" stop-color="#e8e8a8"/><stop offset=".7" stop-color="#d6d7ee"/><stop offset="1" stop-color="#c5cdb8"/></linearGradient></defs><rect width="512" height="512" rx="130" fill="url(#lgw)"/><rect x="104" y="236" width="304" height="52" rx="14" fill="#16171a" opacity=".14"/><line x1="182" y1="118" x2="182" y2="392" stroke="#16171a" stroke-width="22" stroke-linecap="round"/><rect x="146" y="150" width="72" height="196" rx="20" fill="url(#lgw)" stroke="#16171a" stroke-width="22"/><line x1="330" y1="92" x2="330" y2="368" stroke="#16171a" stroke-width="22" stroke-linecap="round"/><rect x="294" y="118" width="72" height="210" rx="20" fill="#16171a"/></svg>Laboratorio IFVG</span><button class="link" type="button" id="w-skip">Saltar ›</button></div>
+      <div class="w-top"><span class="w-brand"><svg viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="lgw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#45d0c0"/><stop offset=".35" stop-color="#4fd8c8"/><stop offset=".7" stop-color="#8db3ff"/><stop offset="1" stop-color="#5fc6e0"/></linearGradient></defs><rect width="512" height="512" rx="130" fill="url(#lgw)"/><rect x="104" y="236" width="304" height="52" rx="14" fill="#06121c" opacity=".14"/><line x1="182" y1="118" x2="182" y2="392" stroke="#06121c" stroke-width="22" stroke-linecap="round"/><rect x="146" y="150" width="72" height="196" rx="20" fill="url(#lgw)" stroke="#06121c" stroke-width="22"/><line x1="330" y1="92" x2="330" y2="368" stroke="#06121c" stroke-width="22" stroke-linecap="round"/><rect x="294" y="118" width="72" height="210" rx="20" fill="#06121c"/></svg>Laboratorio IFVG</span><button class="link" type="button" id="w-skip">Saltar ›</button></div>
       <div class="w-vis" id="w-vis"></div>
       <div class="w-txt"><h1>${sl.t}</h1><p class="lead">${sl.d}</p>
         <div class="dots" aria-label="Paso ${slide + 1} de ${SLIDES.length}">${SLIDES.map((_, i) => `<span class="${i === slide ? 'on' : ''}"></span>`).join('')}</div>
@@ -491,8 +491,8 @@
           check: (p) => {
             const rr = (p - f.entry) * f.dir / risk;
             const hit = valid.find((x) => (x.p2 != null ? p >= Math.min(x.p, x.p2) - tol && p <= Math.max(x.p, x.p2) + tol : Math.abs(p - x.p) <= tol));
-            if (rr < 1) return { ok: false, msg: `R:R 1:${Math.max(0, rr).toFixed(2)}. Por debajo de 1:1 no compensa. Busca un objetivo más lejos.` };
-            return hit ? { ok: true, msg: `Correcto: ${hit.kind} con R:R 1:${rr.toFixed(1)}.` } : { ok: false, msg: `R:R 1:${rr.toFixed(1)}, pero no hay liquidez ni FVG en ese precio. El objetivo claro más cercano era ${valid[0] ? `${valid[0].kind} en ${fmt(valid[0].p)}` : 'ninguno'}.` };
+            if (rr < 1) return { ok: false, msg: `R:R 1:${Math.max(0, rr).toLocaleString('es-ES', { maximumFractionDigits: 2 })}. Por debajo de 1:1 no compensa. Busca un objetivo más lejos.` };
+            return hit ? { ok: true, msg: `Correcto: ${hit.kind} con R:R 1:${rr.toLocaleString('es-ES', { maximumFractionDigits: 1 })}.` } : { ok: false, msg: `R:R 1:${rr.toLocaleString('es-ES', { maximumFractionDigits: 1 })}, pero no hay liquidez ni FVG en ese precio. El objetivo claro más cercano era ${valid[0] ? `${valid[0].kind} en ${fmt(valid[0].p)}` : 'ninguno'}.` };
           },
           reveal: valid.slice(0, 3).map((x) => (x.p2 != null ? { k: 'box', i0: x.i - 1, i1: b + 5, p0: x.p, p1: x.p2, c: 'acc', t: x.kind } : { k: 'h', p: x.p, i0: x.i, i1: b + 5, c: 'bull', t: x.kind })) };
       }
@@ -865,7 +865,9 @@
     const sw = E.sweeps(C, t + 1).filter((x) => x.dir === dir && x.j >= t - 15 && x.j <= t);
     const from = sw.length ? sw[sw.length - 1].j : Math.max(0, t - 10);
     const seg = C.slice(from, t + 1);
-    const sl = E.rt(dir > 0 ? Math.min(...seg.map((b) => b.l)) - 1 : Math.max(...seg.map((b) => b.h)) + 1);
+    const es = SIM.S.mkt === 'ES', pad = es ? 0.25 : 1, minStop = es ? 1.25 : 4; // un stop de 1-2 puntos lo barre el ruido
+    let sl = E.rt(dir > 0 ? Math.min(...seg.map((b) => b.l)) - pad : Math.max(...seg.map((b) => b.h)) + pad);
+    if ((o.entry - sl) * dir < minStop) sl = E.rt(o.entry - dir * minStop);
     const risk = Math.abs(o.entry - sl);
     const tg = E.targets(C, t, dir).find((x) => (x.p - o.entry) * dir >= risk);
     return { sl, tp: tg ? tg.p : E.rt(o.entry + dir * risk * 1.5), why: sw.length ? 'stop tras el barrido' : 'stop tras el extremo reciente', tpWhy: tg ? tg.kind.toLowerCase().replace('fvg', 'FVG') : 'objetivo a 1,5 R (no hay liquidez cerca)' };
@@ -875,7 +877,7 @@
     const entry = SIM.S.C[SIM.t].c;
     const o = { dir, entry, risk: SIM.risk };
     if (SIM.assist) { const sg = suggest(o); o.sl = sg.sl; o.tp = sg.tp; o.why = `Plan sugerido: ${sg.why} y ${sg.tpWhy}.`; }
-    else { o.sl = E.rt(entry - dir * 10); o.tp = E.rt(entry + dir * 15); o.why = 'Coloca el stop y el objetivo según el plan.'; }
+    else { const k = SIM.S.mkt === 'ES' ? 0.3 : 1; o.sl = E.rt(entry - dir * 10 * k); o.tp = E.rt(entry + dir * 15 * k); o.why = 'Coloca el stop y el objetivo según el plan.'; }
     SIM.warn = SIM.trades.length ? 'Tu plan dice un trade por sesión: este segundo trade se descuenta en tu nota.' : '';
     SIM.order = o; buzz(10);
     simDraw();
@@ -985,7 +987,7 @@
       grade = E.gradeTrade(C, SIM.trades[0], { vol: SIM.S.vol, tradeCount: SIM.trades.length });
       outcome = SIM.trades.reduce((a, b) => a + b.R, 0);
     } else if (sys) {
-      grade = { score: 40, items: [{ label: 'Sesión sin operar', pts: 40, max: 100, ok: false, msg: `Había un setup válido a las ${E.hhmm(sys.t)} (Modelo ${sys.model}, ${sys.dir > 0 ? 'compra' : 'venta'}, R:R 1:${sys.rr.toFixed(1)}). Ver la repetición en el gráfico.` }] };
+      grade = { score: 40, items: [{ label: 'Sesión sin operar', pts: 40, max: 100, ok: false, msg: `Había un setup válido a las ${E.hhmm(sys.t)} (Modelo ${sys.model}, ${sys.dir > 0 ? 'compra' : 'venta'}, R:R 1:${sys.rr.toFixed(1).replace('.', ',')}). Ver la repetición en el gráfico.` }] };
     } else {
       grade = { score: 100, items: [{ label: 'Sesión sin operar', pts: 100, max: 100, ok: true, msg: 'Correcto: no hubo toma de liquidez + IFVG + objetivo claro dentro de la ventana. No operar también es cumplir el plan.' }] };
     }
@@ -1011,7 +1013,7 @@
     const tr = SIM.trades[0];
     host.innerHTML = `<section class="panel result">
       <div class="res-head"><div class="score ${tier[1]}"><b>${grade.score}</b><span>/100 disciplina</span></div>
-        <div><h2>${tier[0]}</h2><p>${tr ? `${tr.dir > 0 ? 'Long' : 'Short'} a las ${E.hhmm(tr.t)} · ${tr.reason} · <b class="${outcome >= 0 ? 'pos' : 'neg'}">${outcome >= 0 ? '+' : ''}${outcome.toFixed(2)} R</b> (${(outcome * tr.usdPerR).toLocaleString('es-ES', { maximumFractionDigits: 0 })} $)` : 'Sin operaciones'}</p>
+        <div><h2>${tier[0]}</h2><p>${tr ? `${tr.dir > 0 ? 'Compra' : 'Venta'} a las ${E.hhmm(tr.t)} · ${tr.reason} · <b class="${outcome >= 0 ? 'pos' : 'neg'}">${outcome >= 0 ? '+' : ''}${outcome.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} R</b> (${(outcome * tr.usdPerR).toLocaleString('es-ES', { maximumFractionDigits: 0 })} $)` : 'Sin operaciones'}</p>
         <p class="muted small">La nota mide si seguiste el plan, no si ganaste. ${sys ? `El sistema detectó el primer setup a las ${E.hhmm(sys.t)} (Modelo ${sys.model}).` : 'El sistema no detectó setups válidos en la ventana.'}</p></div></div>
       <button class="btn pri wide" type="button" id="rp-start">Ver repetición guiada paso a paso</button>
       <ul class="grade">${grade.items.map((it) => `<li class="${it.ok ? 'ok' : it.pts > 0 ? 'mid' : 'no'}"><div><b>${it.label}</b><p>${esc(it.msg)}</p></div><span class="mono">${it.pts}/${it.max}</span></li>`).join('')}</ul>
@@ -1026,7 +1028,7 @@
   // ---------- Progreso ----------
   const hm = (i, sess) => { const m = (sess === 'asia' ? 19 * 60 + 30 : 9 * 60) + i; return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
   const RULE = { time: 'Horario operativo', sweep: 'Toma de liquidez previa', ifvg: 'Entrada en IFVG', sl: 'Stop loss lógico', tp: 'Objetivo claro y R:R ≥ 1', risk: 'Riesgo 0,5–0,7 %', one: 'Un trade por sesión' };
-  const hbars = (rows, fmtv, cls = '') => `<div class="hbars ${cls}">${rows.map((r) => `<div class="hb"><span class="hb-l">${r.l}</span><span class="hb-t"><i style="width:${Math.max(2, Math.min(100, r.w))}%" class="${r.c || ''}"></i></span><b class="hb-v">${fmtv(r)}</b></div>`).join('')}</div>`;
+  const hbars = (rows, fmtv, cls = '') => `<div class="hbars ${cls}">${rows.map((r) => `<div class="hb"><span class="hb-l">${r.l}</span><span class="hb-t"><i style="width:${r.w > 0 ? Math.max(2, Math.min(100, r.w)) : 0}%" class="${r.c || ''}"></i></span><b class="hb-v">${fmtv(r)}</b></div>`).join('')}</div>`;
   function vJournal(m) {
     const { cur, next } = currentLevel();
     m.appendChild(H(`<header class="page-head"><h1>Progreso</h1><p class="lead">Tu nivel, en qué fallas, tus estadísticas y el diario de sesiones.</p></header>`));
@@ -1076,7 +1078,7 @@
         if (!$('#j-curve')) return;
         let e = 0; const v = [0, ...S.sims.map((x) => (e += x.R))];
         const d = [S.sims[0].score / 10, ...S.sims.map((x, i, a) => a.slice(Math.max(0, i - 4), i + 1).reduce((q, w) => q + w.score, 0) / Math.min(5, i + 1) / 10)];
-        CH.lines($('#j-curve'), [{ v, c: 'info', label: `${e.toFixed(1)} R`, area: true }, { v: d, c: 'acc', dash: true, label: 'Disciplina ÷10' }], { h: 210, refs: [{ v: 0, c: 'mute' }], xlabel: 'Sesiones' });
+        CH.lines($('#j-curve'), [{ v, c: 'info', label: `${e.toLocaleString('es-ES', { maximumFractionDigits: 1 })} R`, area: true }, { v: d, c: 'acc', dash: true, label: 'Disciplina ÷10' }], { h: 210, refs: [{ v: 0, c: 'mute' }], xlabel: 'Sesiones' });
       });
       const rows = S.sims.map((x, i) => ({ x, i })).reverse();
       m.appendChild(H(`<section class="card"><h2>Diario de sesiones</h2><div class="jlist">

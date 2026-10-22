@@ -340,9 +340,9 @@
     const tol = Math.max(2, risk * 0.2);
     const hit = tg.find((x) => (x.p2 != null ? (tr.tp >= Math.min(x.p, x.p2) - tol && tr.tp <= Math.max(x.p, x.p2) + tol) : Math.abs(tr.tp - x.p) <= tol));
     let tpPts = 0, tpMsg;
-    if (hit && rr >= 1) { tpPts = 15; tpMsg = `TP en un objetivo claro (${hit.kind}) con R:R 1:${rr.toFixed(1)}.`; }
-    else if (rr >= 1) { tpPts = 7; tpMsg = `R:R 1:${rr.toFixed(1)}, pero el TP no está en liquidez ni en un FVG sin rellenar.` + (tg[0] ? ` Objetivo más cercano: ${tg[0].kind} en ${fmt(tg[0].p)}.` : ''); }
-    else tpMsg = `R:R 1:${rr.toFixed(2)}. Por debajo de 1:1 la operación no compensa el riesgo.`;
+    if (hit && rr >= 1) { tpPts = 15; tpMsg = `TP en un objetivo claro (${hit.kind}) con R:R 1:${rr.toFixed(1).replace('.', ',')}.`; }
+    else if (rr >= 1) { tpPts = 7; tpMsg = `R:R 1:${rr.toFixed(1).replace('.', ',')}, pero el TP no está en liquidez ni en un FVG sin rellenar.` + (tg[0] ? ` Objetivo más cercano: ${tg[0].kind} en ${fmt(tg[0].p)}.` : ''); }
+    else tpMsg = `R:R 1:${rr.toFixed(2).replace('.', ',')}. Por debajo de 1:1 la operación no compensa el riesgo.`;
     add('tp', 'Objetivo claro y R:R ≥ 1', tpPts, 15, tpMsg);
     // 6. Riesgo
     const rp = tr.riskPct;
