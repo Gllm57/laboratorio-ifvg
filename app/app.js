@@ -12,7 +12,8 @@
   let S = blank();
   try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(blank(), JSON.parse(raw)); } catch (e) { /* sin almacenamiento */ }
   if (S.onb == null) S.onb = S.xp > 0; // quien ya tenía progreso no ve la bienvenida
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignorar */ } renderHeader(); };
+  const store = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignorar */ } };
+  const save = () => { S.updatedAt = Date.now(); store(); renderHeader(); syncPush(); };
   const addXP = (n) => { S.xp += Math.round(n); };
   // Actividad por día (lección, práctica, sesión, repaso) para el plan de Hoy y la racha
   const today = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -129,7 +130,7 @@
     document.body.classList.add('onb');
     const sl = SLIDES[slide], last = slide === SLIDES.length - 1;
     const el = H(`<section class="welcome">
-      <div class="w-top"><span class="w-brand"><svg viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="lgw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#45d0c0"/><stop offset=".35" stop-color="#4fd8c8"/><stop offset=".7" stop-color="#8db3ff"/><stop offset="1" stop-color="#5fc6e0"/></linearGradient></defs><rect width="512" height="512" rx="130" fill="url(#lgw)"/><rect x="104" y="236" width="304" height="52" rx="14" fill="#06121c" opacity=".14"/><line x1="182" y1="118" x2="182" y2="392" stroke="#06121c" stroke-width="22" stroke-linecap="round"/><rect x="146" y="150" width="72" height="196" rx="20" fill="url(#lgw)" stroke="#06121c" stroke-width="22"/><line x1="330" y1="92" x2="330" y2="368" stroke="#06121c" stroke-width="22" stroke-linecap="round"/><rect x="294" y="118" width="72" height="210" rx="20" fill="#06121c"/></svg>Laboratorio IFVG</span><button class="link" type="button" id="w-skip">Saltar ›</button></div>
+      <div class="w-top"><span class="w-brand"><svg viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="lgw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9a5c"/><stop offset=".35" stop-color="#ff6d29"/><stop offset=".7" stop-color="#f5b993"/><stop offset="1" stop-color="#ff7a38"/></linearGradient></defs><rect width="512" height="512" rx="130" fill="url(#lgw)"/><rect x="104" y="236" width="304" height="52" rx="14" fill="#161316" opacity=".14"/><line x1="182" y1="118" x2="182" y2="392" stroke="#161316" stroke-width="22" stroke-linecap="round"/><rect x="146" y="150" width="72" height="196" rx="20" fill="url(#lgw)" stroke="#161316" stroke-width="22"/><line x1="330" y1="92" x2="330" y2="368" stroke="#161316" stroke-width="22" stroke-linecap="round"/><rect x="294" y="118" width="72" height="210" rx="20" fill="#161316"/></svg>Laboratorio IFVG</span><button class="link" type="button" id="w-skip">Saltar ›</button></div>
       <div class="w-vis" id="w-vis"></div>
       <div class="w-txt"><h1>${sl.t}</h1><p class="lead">${sl.d}</p>
         <div class="dots" aria-label="Paso ${slide + 1} de ${SLIDES.length}">${SLIDES.map((_, i) => `<span class="${i === slide ? 'on' : ''}"></span>`).join('')}</div>
@@ -180,7 +181,7 @@
     const doneN = plan.filter((x) => doneToday(x.k)).length;
     m.appendChild(H(`<section class="g-hero">
       <div class="g-row"><span class="pill-dark ${ny.open ? 'live' : ''}"><i></i>${ny.text}</span></div>
-      <h1>Hola de nuevo,<br><b>${doneN === 3 ? 'plan de hoy completo' : `te quedan ${3 - doneN} de 3 pasos`}</b></h1>
+      <h1>${(() => { const h = new Date().getHours(); return h < 6 ? 'Buenas noches.' : h < 13 ? 'Buenos días.' : h < 20 ? 'Buenas tardes.' : 'Buenas noches.'; })()}<br>${doneN === 3 ? '<b>Plan de hoy completo.</b>' : `Te quedan <b>${3 - doneN} ${3 - doneN === 1 ? 'paso' : 'pasos'}</b>${due.length ? ` y <b>${Math.min(3, due.length)} ${due.length === 1 ? 'repaso' : 'repasos'}</b>` : ''} hoy.`}</h1>
       <div class="lvl-card">
         <div class="lvl-top"><span><small>Tu nivel</small><b>${cur.n} · ${cur.name}</b></span><span class="xp">${S.xp.toLocaleString('es-ES')} <small>XP</small></span></div>
         <i class="gbar"><i style="width:${pct}%"></i></i>
@@ -298,11 +299,13 @@
       ${T.err.length ? `<section class="card"><h2>Errores comunes</h2><ul class="x">${T.err.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
       ${T.ej ? `<section class="card example"><h2>Ejemplo</h2><p>${esc(T.ej)}</p></section>` : ''}
       <p class="muted small">Video original: “${esc(L.t)} | Día ${L.d}”. <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(L.t + ' bootcamp día ' + L.d)}" target="_blank" rel="noopener">Buscarlo en YouTube</a> · <a href="${PLAYLIST}" target="_blank" rel="noopener">Lista completa</a></p>
+      ${DAY_EX[L.d] ? `<section class="card practice-cta"><div><small class="muted">Pon esto en práctica</small><b>${EXS.find((x) => x.id === DAY_EX[L.d]).t}</b><p class="muted small">Una ronda de 5 preguntas sobre gráficos, corregida al momento.</p></div><button class="btn pri" type="button" id="l-practice">Practicar ahora</button></section>` : ''}
       <section class="card quiz" id="quiz"><h2>Control del día</h2>${st.passed ? '<p class="pill ok">Aprobado</p>' : ''}</section>
       <nav class="pager">${L.d > 1 ? `<a class="btn" href="#dia${L.d - 1}">← Día ${L.d - 1}</a>` : '<span></span>'}${L.d < 50 ? `<a class="btn" href="#dia${L.d + 1}">Día ${L.d + 1} →</a>` : '<a class="btn" href="#estrategia">Examen final →</a>'}</nav>
     </article>`);
     m.appendChild(el);
     if ($('#dg')) lazyDG($('#dg'), L.dg);
+    if ($('#l-practice')) $('#l-practice').onclick = () => { EX = { active: true, id: DAY_EX[L.d], k: 0, ok: 0, round: null }; location.hash = 'practica'; };
     el.querySelectorAll('[data-dg]').forEach((d) => lazyDG(d, d.dataset.dg));
     quiz($('#quiz'), L.q, (ok, total, firstTry) => {
       const prev = S.lessons[L.d] || {};
@@ -370,6 +373,10 @@
   }
 
   // ---------- Práctica ----------
+  // Qué día explica cada regla y cada ejercicio: cada error lleva a su teoría y cada lección a su práctica
+  const RULE_DAY = { time: 6, sweep: 13, ifvg: 28, sl: 17, tp: 17, risk: 15, one: 31 };
+  const EX_DAY = { fvg: 16, sweep: 13, ifvg: 28, stop: 17, target: 17, model: 38, calc: 19 };
+  const DAY_EX = { 16: 'fvg', 13: 'sweep', 28: 'ifvg', 17: 'stop', 38: 'model', 19: 'calc', 15: 'calc', 12: 'sweep' };
   const EXS = [
     { id: 'fvg', t: 'Detecta el FVG', d: 'Toca la vela central de un Fair Value Gap.' },
     { id: 'sweep', t: 'Toma de liquidez', d: 'Encuentra la vela que barre el nivel marcado.' },
@@ -542,7 +549,7 @@
       try { navigator.vibrate?.(res.ok ? 15 : [30, 40, 30]); } catch (e) { /* sin vibración */ }
       draw([...(R.reveal || []), ...(extra || [])]);
       const last = EX.k === 4;
-      $('#ex-fb').innerHTML = `<div class="fb-box ${res.ok ? 'good' : 'bad'}"><b>${res.ok ? 'Bien' : 'Revisa'}</b><p>${esc(res.msg)}</p></div><button class="btn pri" id="ex-next" type="button">${last ? 'Ver resultado' : 'Siguiente'}</button>`;
+      $('#ex-fb').innerHTML = `<div class="fb-box ${res.ok ? 'good' : 'bad'}"><b>${res.ok ? 'Bien' : 'Revisa'}</b><p>${esc(res.msg)}</p>${!res.ok && EX_DAY[EX.id] ? `<a class="small" href="#dia${EX_DAY[EX.id]}">Repasar la teoría: día ${EX_DAY[EX.id]} ›</a>` : ''}</div><button class="btn pri" id="ex-next" type="button">${last ? 'Ver resultado' : 'Siguiente'}</button>`;
       $('#ex-next').addEventListener('click', () => {
         if (last) return exEnd();
         EX.k++; EX.round = null; render();
@@ -809,7 +816,7 @@
         <button class="btn" id="sim-step" type="button" aria-label="Avanzar 1 minuto">+1m</button>
         <button class="btn play" id="sim-auto" type="button" aria-label="${autoT ? 'Pausar' : 'Reproducir'}">${autoT ? '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="5" y="4" width="4" height="14" rx="1.5"/><rect x="13" y="4" width="4" height="14" rx="1.5"/></svg>' : '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M7 4l11 7-11 7z"/></svg>'}</button>
         <button class="btn" id="sim-5" type="button" aria-label="Avanzar">${SIM.tf === 1 ? '+5m' : `+${SIM.tf}m`}</button>
-        <button class="btn ghost sq" id="sim-end" type="button">Fin</button>
+        <button class="btn sq end" id="sim-end" type="button" aria-label="Terminar la sesión y evaluar">Evaluar</button>
       </div>`;
     if (SIM.order) { c.innerHTML = orderPanel(); bindOrder(); return; }
     if (op) {
@@ -824,6 +831,17 @@
         <div class="pos-lbl"><span>SL ${fmt(op.slNow ?? op.sl)}</span><span>TP ${fmt(op.tp)}</span></div>
         <div class="sx-row"><button class="btn buy" id="sim-be" type="button" ${op.slNow === op.entry || (SIM.S.C[SIM.t].c - op.entry) * op.dir <= 0 ? 'disabled' : ''} title="Solo con la operación en ganancia">Stop a break even</button><button class="btn sell" id="sim-close" type="button">Cerrar a mercado</button></div>
       </div>`;
+    } else if (SIM.trades.length && !SIM.keepGoing) {
+      // ya operaste: el plan dice un trade por sesión, así que lo siguiente es evaluarlo
+      const last = SIM.trades[SIM.trades.length - 1], tot = SIM.trades.reduce((q, x) => q + (x.R || 0), 0);
+      c.innerHTML = `<div class="sx-closed">
+        <div class="pos-head"><span><b>Operación cerrada · ${esc(last.reason)}</b><small>${last.dir > 0 ? 'Compra' : 'Venta'} a las ${E.hhmm(last.t)} · salida ${E.hhmm(last.exitI)}</small></span>
+          <span class="pnl ${tot >= 0 ? 'pos' : 'neg'}"><b>${tot >= 0 ? '+' : ''}${tot.toLocaleString('es-ES', { maximumFractionDigits: 2, minimumFractionDigits: 2 })} R</b><small>${Math.round(SIM.trades.reduce((q, x) => q + (x.R || 0) * x.usdPerR, 0)).toLocaleString('es-ES')} $</small></span></div>
+        <button class="btn pri tall" id="sim-eval" type="button"><b>Terminar y evaluar mi trade</b><small>Nota de disciplina, errores y repetición guiada</small></button>
+        <button class="link small" id="sim-more" type="button">Seguir viendo el mercado sin operar</button></div>`;
+      $('#sim-eval').onclick = () => simFinish();
+      $('#sim-more').onclick = () => { SIM.keepGoing = true; simCtrl(); };
+      return;
     } else {
       const px = fmt(SIM.S.C[SIM.t].c);
       c.innerHTML = player + `<div class="sx-row trade">
@@ -1025,7 +1043,7 @@
         <div><h2>${tier[0]}</h2><p>${tr ? `${tr.dir > 0 ? 'Compra' : 'Venta'} a las ${E.hhmm(tr.t)} · ${tr.reason} · <b class="${outcome >= 0 ? 'pos' : 'neg'}">${outcome >= 0 ? '+' : ''}${outcome.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} R</b> (${SIM.trades.reduce((q, x) => q + (x.R || 0) * x.usdPerR, 0).toLocaleString('es-ES', { maximumFractionDigits: 0 })} $)` : 'Sin operaciones'}</p>
         <p class="muted small">La nota mide si seguiste el plan, no si ganaste. ${sys ? `El sistema detectó el primer setup a las ${E.hhmm(sys.t)} (Modelo ${sys.model}).` : 'El sistema no detectó setups válidos en la ventana.'}</p></div></div>
       <button class="btn pri wide" type="button" id="rp-start">Ver repetición guiada paso a paso</button>
-      <ul class="grade">${grade.items.map((it) => `<li class="${it.ok ? 'ok' : it.pts > 0 ? 'mid' : 'no'}"><div><b>${it.label}</b><p>${esc(it.msg)}</p></div><span class="mono">${it.pts}/${it.max}</span></li>`).join('')}</ul>
+      <ul class="grade">${grade.items.map((it) => `<li class="${it.ok ? 'ok' : it.pts > 0 ? 'mid' : 'no'}"><div><b>${it.label}</b><p>${esc(it.msg)}</p>${!it.ok && RULE_DAY[it.key] ? `<a class="small" href="#dia${RULE_DAY[it.key]}">Repasar: día ${RULE_DAY[it.key]} ›</a>` : ''}</div><span class="mono">${it.pts}/${it.max}</span></li>`).join('')}</ul>
       <label for="sim-note" class="note-l">Nota para tu diario (emociones, qué mejorar)</label>
       <textarea id="sim-note" rows="2" placeholder="Ej.: entré antes del cierre de la vela por ansiedad"></textarea>
       <div class="row"><button class="btn" id="note-save" type="button">Guardar nota</button><span class="muted small" id="note-ok"></span></div>
@@ -1041,6 +1059,7 @@
   function vJournal(m) {
     const { cur, next } = currentLevel();
     m.appendChild(H(`<header class="page-head"><h1>Progreso</h1><p class="lead">Tu nivel, en qué fallas, tus estadísticas y el diario de sesiones.</p></header>`));
+    m.appendChild(H(`<section class="card acct" id="acct">${accountHTML()}</section>`));
     m.appendChild(H(`<section class="card"><div class="card-head"><h2>Nivel ${cur.n} · ${cur.name}</h2><span class="muted small">${S.xp.toLocaleString('es-ES')} XP · racha ${streak()}</span></div>
       <div class="ladder">${levels().map((l) => `<span class="${l.n <= cur.n ? 'on' : ''}">${l.n}</span>`).join('')}</div>
       ${next ? `<p class="small muted">Para ${next.name}:</p><ul class="reqs">${next.reqs.map(([t, v, g, u = '']) => `<li class="${v >= g ? 'ok' : ''}"><span>${t}</span><b>${v}${u} / ${g}${u}</b></li>`).join('')}</ul>` : '<p>Nivel máximo. Mantén una sesión diaria para conservar la consistencia.</p>'}</section>`));
@@ -1060,10 +1079,10 @@
       // reglas que más fallas
       const withItems = tr.filter((x) => x.items && x.items.length);
       if (withItems.length) {
-        const rows = Object.keys(RULE).map((k) => { const n = withItems.filter((x) => x.items.some((i) => i.k === k && !i.ok)).length; return { l: RULE[k], n, w: n / withItems.length * 100, c: n / withItems.length >= 0.4 ? 'p' : n ? 'y' : 'g' }; }).sort((a, b) => b.n - a.n);
+        const rows = Object.keys(RULE).map((k) => { const n = withItems.filter((x) => x.items.some((i) => i.k === k && !i.ok)).length; return { k, l: RULE[k], n, w: n / withItems.length * 100, c: n / withItems.length >= 0.4 ? 'p' : n ? 'y' : 'g' }; }).sort((a, b) => b.n - a.n);
         const top = rows[0];
         m.appendChild(H(`<section class="card"><div class="card-head"><h2>Lo que más fallas</h2><span class="muted small">${withItems.length} trades</span></div>
-          ${top.n ? `<p class="warn-box"><b>${top.l}:</b> no la cumpliste en ${Math.round(top.w)} % de tus trades. Es lo primero a corregir.</p>` : '<p class="ok-box">Cumpliste todas las reglas en tus trades registrados.</p>'}
+          ${top.n ? `<p class="warn-box"><b>${top.l}:</b> no la cumpliste en ${Math.round(top.w)} % de tus trades. Es lo primero a corregir. <a href="#dia${RULE_DAY[top.k]}">Repasar día ${RULE_DAY[top.k]} ›</a></p>` : '<p class="ok-box">Cumpliste todas las reglas en tus trades registrados.</p>'}
           ${hbars(rows, (r) => Math.round(r.w) + ' %')}</section>`));
       }
       // operas el setup del plan
@@ -1108,10 +1127,96 @@
     $('#bk-load').onclick = () => { try { const v = JSON.parse($('#bk').value); if (!v || typeof v !== 'object' || !('lessons' in v)) throw 0; S = Object.assign(blank(), v); save(); $('#bk-msg').textContent = 'Progreso cargado.'; } catch (e) { $('#bk-msg').textContent = 'El texto no es una copia válida del progreso.'; } };
   }
 
+  // ---------- Cuenta y sincronización ----------
+  // Dentro de Claude la app guarda tu progreso en tu cuenta (documento privado por persona) y lo trae en cualquier
+  // dispositivo donde abras el mismo enlace. Fuera de Claude (GitHub Pages) queda solo en este dispositivo.
+  const APP_URL = 'https://claude.ai/artifact/FDwtVUnsGmB3v61EDn1EKX';
+  const DEV = Math.random().toString(36).slice(2, 10);
+  const SYNC = { state: 'off', ref: null, me: null, at: 0, t: null, tried: false };
+  const syncBody = () => { const { real, realIdx, ...rest } = S; return rest; }; // las velas importadas pesan mucho: se quedan en este dispositivo
+  // Fusión determinista: uniones donde se puede; en conflicto gana el lado editado más tarde (empate: el remoto),
+  // así dos dispositivos llegan al mismo resultado y no se reenvían datos en bucle.
+  function mergeState(a, b) {
+    const aNew = (a.updatedAt || 0) > (b.updatedAt || 0), N = aNew ? a : b, O = aNew ? b : a;
+    const o = Object.assign(blank(), O, N);
+    o.xp = Math.max(a.xp || 0, b.xp || 0);
+    o.lessons = { ...(O.lessons || {}), ...(N.lessons || {}) };
+    for (const src of [a, b]) for (const [d, v] of Object.entries(src.lessons || {})) {
+      const c = o.lessons[d];
+      if (v.passed && (!c.passed || (v.at || 0) < (c.at || 0))) o.lessons[d] = v;
+    }
+    const sims = new Map(); [...(O.sims || []), ...(N.sims || [])].forEach((x) => sims.set(x.at, { ...(sims.get(x.at) || {}), ...x }));
+    o.sims = [...sims.values()].sort((x, y) => x.at - y.at);
+    o.ex = { ...(O.ex || {}), ...(N.ex || {}) };
+    for (const [k, v] of Object.entries(O.ex || {})) if ((v.runs || 0) > (o.ex[k].runs || 0)) o.ex[k] = v;
+    o.act = {}; for (const src of [O, N]) for (const [d, v] of Object.entries(src.act || {})) o.act[d] = { ...(o.act[d] || {}), ...v };
+    o.rev = { ...(O.rev || {}), ...(N.rev || {}) };
+    o.checkin = { ...(O.checkin || {}), ...(N.checkin || {}) };
+    o.exam = Math.max(a.exam ?? -1, b.exam ?? -1); if (o.exam < 0) o.exam = null;
+    o.last = Math.max(a.last || 1, b.last || 1); o.onb = !!(a.onb || b.onb);
+    o.lastBackup = Math.max(a.lastBackup || 0, b.lastBackup || 0);
+    o.updatedAt = Math.max(a.updatedAt || 0, b.updatedAt || 0);
+    o.real = a.real || []; o.realIdx = a.realIdx || 0;
+    return o;
+  }
+  const canon = (v) => Array.isArray(v) ? `[${v.map(canon).join(',')}]` : v && typeof v === 'object' ? `{${Object.keys(v).filter((k) => v[k] !== undefined).sort().map((k) => JSON.stringify(k) + ':' + canon(v[k])).join(',')}}` : JSON.stringify(v ?? null);
+  const sameBody = (x, y) => { const f = (o) => { const { real, realIdx, updatedAt, ...r } = o; return canon(r); }; return f(x) === f(y); };
+  function syncPush() {
+    if (!SYNC.ref) return;
+    clearTimeout(SYNC.t);
+    SYNC.t = setTimeout(async () => {
+      const body = syncBody();
+      let txt = JSON.stringify(body);
+      while (txt.length > 240000 && body.sims.length > 20) { body.sims = body.sims.slice(Math.ceil(body.sims.length / 10)); txt = JSON.stringify(body); }
+      try { await SYNC.ref.set({ v: 1, at: S.updatedAt || Date.now(), dev: DEV, s: txt }); SYNC.state = 'ok'; SYNC.at = Date.now(); }
+      catch (e) { SYNC.state = e && e.code === 'revoked' ? 'off' : 'err'; }
+      drawAccount();
+    }, 1200);
+  }
+  function onRemote(snap) {
+    if (!snap.exists) { syncPush(); return; } // primera vez con esta cuenta: sube lo que hay en este dispositivo
+    const d = snap.data(); SYNC.state = 'ok'; SYNC.at = Date.now();
+    if (d.dev === DEV) { drawAccount(); return; }
+    let remote; try { remote = JSON.parse(d.s); } catch (e) { return; }
+    const merged = mergeState(S, remote);
+    const changed = !sameBody(merged, S);
+    S = merged; store();
+    if (!sameBody(merged, Object.assign(blank(), remote))) syncPush(); // este dispositivo tenía algo que la cuenta no
+    if (changed) { renderHeader(); if (view !== 'simulador' && !(view === 'practica' && EX)) render(); }
+    drawAccount();
+  }
+  async function syncStart() {
+    const cl = window.claude;
+    if (!cl || typeof cl.use !== 'function') { if (!SYNC.tried) { SYNC.tried = true; setTimeout(syncStart, 1500); } else { SYNC.state = 'local'; drawAccount(); } return; }
+    SYNC.state = 'connecting'; drawAccount();
+    const [db, user] = await Promise.all([cl.use('db'), cl.use('user')]);
+    const uid = user ? await user.id() : null;
+    if (!db || !uid) { SYNC.state = 'local'; drawAccount(); return; }
+    SYNC.me = await user.me();
+    SYNC.ref = db.doc('data/users/' + uid + '/progress');
+    SYNC.ref.onSnapshot(onRemote, () => { SYNC.state = 'err'; drawAccount(); });
+  }
+  const ago = (t) => { const s = Math.round((Date.now() - t) / 1000); return s < 60 ? 'hace un momento' : s < 3600 ? `hace ${Math.round(s / 60)} min` : `hace ${Math.round(s / 3600)} h`; };
+  function accountHTML() {
+    const me = SYNC.me, on = SYNC.ref && SYNC.state !== 'local';
+    const st = { ok: `Sincronizado · ${ago(SYNC.at)}`, connecting: 'Conectando con tu cuenta…', err: 'Sin conexión: se guarda aquí y se sube al volver', local: 'Solo en este dispositivo', off: 'Solo en este dispositivo' }[SYNC.state] || '';
+    return `<div class="acct-row"><span class="acct-av">${me && me.avatarUrl ? `<img src="${esc(me.avatarUrl)}" alt="">` : '<svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 18.5c1.2-3.2 3.6-4.8 6.5-4.8s5.3 1.6 6.5 4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'}</span>
+      <span class="acct-t"><b>${on ? esc((me && me.name) || 'Tu cuenta') : 'Tu cuenta'}</b><small class="${SYNC.state === 'ok' ? 'ok' : SYNC.state === 'err' ? 'warn' : ''}">${st}</small></span></div>
+      <p class="small muted">${on ? 'Tu progreso (lecciones, XP, ejercicios, sesiones y notas) se guarda en tu cuenta de Claude. Abre este mismo enlace en el celular o en la PC con tu cuenta y sigues donde lo dejaste.'
+        : `Para tener tu cuenta y seguir el avance en el celular y en la PC, abre la app desde tu enlace de Claude con tu cuenta iniciada. Para llevar lo que tienes aquí: copia la copia de seguridad (abajo) y pégala allí.`}</p>
+      ${on ? '' : `<a class="btn pri" href="${APP_URL}" target="_blank" rel="noopener">Abrir mi app con cuenta</a>`}`;
+  }
+  function drawAccount() {
+    const el = $('#acct'); if (el) el.innerHTML = accountHTML();
+    const av = $('#hdr-acct');
+    if (av) { av.hidden = !SYNC.ref; av.classList.toggle('ok', SYNC.state === 'ok'); if (SYNC.me && SYNC.me.avatarUrl && !av.querySelector('img')) av.innerHTML = `<img src="${esc(SYNC.me.avatarUrl)}" alt="">`; }
+  }
+
   // ---------- Arranque ----------
   let rz, lastW = window.innerWidth;
   window.addEventListener('resize', () => { moveInd(true); if (window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(rz); rz = setTimeout(() => { if (view === 'simulador') simDraw(); else if (view !== 'practica') render(); }, 250); });
   go(location.hash.slice(1));
+  syncStart();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveInd(true));
   // Ocultar la pantalla de carga cuando la app y las fuentes están listas (mínimo ~1,9 s para que se vea la animación completa)
   const splash = document.getElementById('splash');

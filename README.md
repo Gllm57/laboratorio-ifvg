@@ -24,6 +24,10 @@ El progreso se guarda en el `localStorage` del navegador.
 
 En el teléfono, abre el enlace y usa *Añadir a pantalla de inicio*: la app se instala como una aplicación y funciona sin conexión.
 
+## Cuenta y sincronización
+
+Abierta desde su enlace de Claude, la app guarda el progreso en tu cuenta (un documento privado por persona) y lo sincroniza entre el celular y la PC. En GitHub Pages el progreso queda en el dispositivo; la copia de seguridad permite llevarlo a la versión con cuenta.
+
 ## Estructura
 
 | Archivo | Contenido |
