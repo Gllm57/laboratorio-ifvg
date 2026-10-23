@@ -1302,7 +1302,7 @@
   const LOGIN = { email: '', sent: false, msg: '', busy: false };
   async function supaSendCode(email) {
     LOGIN.busy = true; LOGIN.email = email; LOGIN.msg = ''; drawAccount();
-    try { await supa('/auth/v1/otp', { method: 'POST', body: JSON.stringify({ email, create_user: true }) }, false); LOGIN.sent = true; LOGIN.msg = `Te enviamos un código a ${email}. Revisa también el correo no deseado.`; }
+    try { await supa('/auth/v1/otp', { method: 'POST', body: JSON.stringify({ email, create_user: true }) }, false); LOGIN.sent = true; LOGIN.msg = `Te enviamos un correo a ${email} (mira también en no deseado). Si trae un código, escríbelo aquí. Si trae un enlace, ábrelo en este mismo dispositivo y navegador.`; }
     catch (e) { LOGIN.msg = e.status === 429 ? 'Demasiados intentos seguidos. Espera un minuto y vuelve a pedir el código.' : 'No se pudo enviar el código: ' + e.message; }
     LOGIN.busy = false; drawAccount();
   }
@@ -1334,9 +1334,9 @@
     const av = `<span class="acct-av">${me && me.avatarUrl ? `<img src="${esc(me.avatarUrl)}" alt="">` : me && me.name ? esc(me.name[0].toUpperCase()) : '<svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 18.5c1.2-3.2 3.6-4.8 6.5-4.8s5.3 1.6 6.5 4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'}</span>`;
     if (SUPA && !SYNC.ref && !(window.claude && window.claude.use)) {
       return `<div class="acct-row">${av}<span class="acct-t"><b>Tu cuenta</b><small>Sin iniciar sesión · solo en este dispositivo</small></span></div>
-        <p class="small muted">Entra con tu email: te llega un código de 6 dígitos, sin contraseña. Tu progreso se guarda en tu cuenta y lo ves en el celular y en la PC.</p>
+        <p class="small muted">Entra con tu email, sin contraseña: te llega un correo con un código o un enlace para entrar. Tu progreso se guarda en tu cuenta y lo ves en el celular y en la PC.</p>
         ${LOGIN.sent ? `<form class="lg-form" id="lg-code"><label for="lg-token" class="sr">Código</label><input id="lg-token" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="Código de 6 dígitos" required><button class="btn pri" ${LOGIN.busy ? 'disabled' : ''}>${LOGIN.busy ? 'Entrando…' : 'Entrar'}</button></form><button class="link small" type="button" id="lg-back">Usar otro email o pedir otro código</button>`
-          : `<form class="lg-form" id="lg-form"><label for="lg-email" class="sr">Email</label><input id="lg-email" type="email" autocomplete="email" placeholder="tu@email.com" value="${esc(LOGIN.email)}" required><button class="btn pri" ${LOGIN.busy ? 'disabled' : ''}>${LOGIN.busy ? 'Enviando…' : 'Enviarme un código'}</button></form>`}
+          : `<form class="lg-form" id="lg-form"><label for="lg-email" class="sr">Email</label><input id="lg-email" type="email" autocomplete="email" placeholder="tu@email.com" value="${esc(LOGIN.email)}" required><button class="btn pri" ${LOGIN.busy ? 'disabled' : ''}>${LOGIN.busy ? 'Enviando…' : 'Enviarme el acceso'}</button></form>`}
         ${LOGIN.msg ? `<p class="small lg-msg" role="status">${esc(LOGIN.msg)}</p>` : ''}`;
     }
     const st = { ok: `Sincronizado · ${ago(SYNC.at)}`, connecting: 'Conectando con tu cuenta…', err: 'Sin conexión: se guarda aquí y se sube al volver', local: 'Solo en este dispositivo', off: 'Solo en este dispositivo' }[SYNC.state] || '';

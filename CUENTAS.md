@@ -35,20 +35,27 @@ La app ya trae todo el código para tener cuentas: entrar con tu email (sin cont
 1. Menú izquierdo → **SQL Editor** → **New query**.
 2. Pega todo el contenido de [`supabase/schema.sql`](supabase/schema.sql) y pulsa **Run**. Debe decir *Success*.
 
-### 3. Que el email traiga el código
-Por defecto Supabase manda un enlace. La app usa un código, porque en el iPhone el enlace se abriría en Safari y no dentro de la app instalada.
+### 3. Que el email traiga el código (opcional)
+Sin este paso ya puedes entrar: el email trae un **enlace** y la app lo acepta. El código solo hace falta si usas la app **instalada** en el iPhone, porque el enlace se abre en Safari y no dentro de la app.
 
-1. **Authentication** → **Emails** (o *Email Templates*): https://supabase.com/dashboard/project/heaenlyhsgnuahbgawnv/auth/templates
-2. En la plantilla **Magic Link**, cambia:
-   - el asunto a `Tu código para Laboratorio IFVG`;
-   - el cuerpo a:
-     ```html
-     <h2>Tu código</h2>
-     <p>Escribe este código en la app para entrar:</p>
-     <p style="font-size:28px;font-weight:bold;letter-spacing:4px">{{ .Token }}</p>
-     <p>Caduca en una hora. Si no lo pediste, ignora este correo.</p>
-     ```
-3. Haz lo mismo en la plantilla **Confirm signup**: es la que reciben las personas nuevas la primera vez.
+Supabase solo deja editar las plantillas con un servidor de correo propio (SMTP). Con Gmail es gratis:
+1. En tu cuenta de Google activa la **verificación en 2 pasos**.
+2. Entra en https://myaccount.google.com/apppasswords, crea una contraseña de aplicación llamada `Supabase` y copia los 16 caracteres.
+3. En Supabase: **Authentication → Emails → SMTP Settings → Enable custom SMTP**. Rellena:
+   - Sender email: tu Gmail
+   - Sender name: `Laboratorio IFVG`
+   - Host: `smtp.gmail.com`
+   - Port: `587`
+   - Username: tu Gmail
+   - Password: la contraseña de aplicación
+4. Guarda. Luego, en **Templates → Magic link or OTP**, cambia el cuerpo por:
+   ```html
+   <h2>Tu código</h2>
+   <p>Escribe este código en la app para entrar:</p>
+   <p style="font-size:28px;font-weight:bold;letter-spacing:4px">{{ .Token }}</p>
+   <p>Caduca en una hora. Si no lo pediste, ignora este correo.</p>
+   ```
+5. Haz lo mismo en **Confirm sign up**.
 
 ### 4. Dirección de la app
 1. **Authentication** → **URL Configuration**: https://supabase.com/dashboard/project/heaenlyhsgnuahbgawnv/auth/url-configuration
