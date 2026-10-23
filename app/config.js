@@ -2,6 +2,6 @@
 // La clave anon es pública por diseño: lo que protege los datos son las reglas RLS de supabase/schema.sql.
 // Con los dos campos vacíos la app guarda el progreso solo en el dispositivo. Pasos completos: CUENTAS.md
 window.LAB_CONFIG = {
-  supabaseUrl: '',
-  supabaseAnonKey: '',
+  supabaseUrl: 'https://heaenlyhsgnuahbgawnv.supabase.co',
+  supabaseAnonKey: 'sb_publishable_SkZIVQBeIdRSW43frrUPeA_aJn40tbM',
 };

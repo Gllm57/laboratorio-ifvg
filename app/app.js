@@ -1364,6 +1364,17 @@
   // ---------- Arranque ----------
   let rz, lastW = window.innerWidth;
   window.addEventListener('resize', () => { moveInd(true); if (window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(rz); rz = setTimeout(() => { if (view === 'simulador') simDraw(); else if (view !== 'practica') render(); }, 250); });
+  // Si entras con el enlace del email (en lugar del código), la sesión llega en la dirección: se guarda y se limpia
+  if (SUPA && /(^|[#&])(access_token|error_description)=/.test(location.hash)) {
+    const q = new URLSearchParams(location.hash.slice(1));
+    history.replaceState(null, '', location.pathname + location.search + '#diario');
+    if (q.get('error_description')) LOGIN.msg = 'El enlace del email caducó o ya se usó. Pide un código nuevo.';
+    else {
+      const tok = { access_token: q.get('access_token'), refresh_token: q.get('refresh_token'), expires_in: +q.get('expires_in') || 3600, expires_at: +q.get('expires_at') || 0 };
+      fetch(SUPA.url + '/auth/v1/user', { headers: { apikey: SUPA.key, Authorization: 'Bearer ' + tok.access_token } })
+        .then((r) => (r.ok ? r.json() : null)).then((u) => { if (u && u.id && !SYNC.ref) { setAuth({ ...tok, user: u }); if (!(window.claude && window.claude.use)) supaConnect(); } }).catch(() => {});
+    }
+  }
   go(location.hash.slice(1));
   syncStart();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => moveInd(true));

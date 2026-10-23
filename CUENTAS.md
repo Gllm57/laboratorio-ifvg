@@ -13,6 +13,14 @@ La app ya trae todo el código para tener cuentas: entrar con tu email (sin cont
   - si hay avances en los dos lados, los junta (no borra nada).
 - **Sesiones reales importadas desde CSV:** se quedan en cada dispositivo porque pesan mucho.
 
+## Estado actual
+
+- ✅ Proyecto creado: `laboratorio-ifvg` (`heaenlyhsgnuahbgawnv`, región us-east-1).
+- ✅ Tabla `progress` con RLS y sus 4 reglas (Supabase no marca avisos de seguridad).
+- ✅ URL y clave pública puestas en `app/config.js`.
+- ⏳ Pendiente en el panel: la **Site URL** (paso 4) y las **plantillas de email con el código** (paso 3). La herramienta de Supabase que uso no permite cambiarlas.
+- La app también acepta el enlace del email: si lo tocas en lugar de escribir el código, entras igual (en el iPhone se abre en Safari).
+
 ## Paso a paso (unos 15 minutos)
 
 ### 1. Crear el proyecto
@@ -30,7 +38,7 @@ La app ya trae todo el código para tener cuentas: entrar con tu email (sin cont
 ### 3. Que el email traiga el código
 Por defecto Supabase manda un enlace. La app usa un código, porque en el iPhone el enlace se abriría en Safari y no dentro de la app instalada.
 
-1. **Authentication** → **Emails** (o *Email Templates*).
+1. **Authentication** → **Emails** (o *Email Templates*): https://supabase.com/dashboard/project/heaenlyhsgnuahbgawnv/auth/templates
 2. En la plantilla **Magic Link**, cambia:
    - el asunto a `Tu código para Laboratorio IFVG`;
    - el cuerpo a:
@@ -43,7 +51,7 @@ Por defecto Supabase manda un enlace. La app usa un código, porque en el iPhone
 3. Haz lo mismo en la plantilla **Confirm signup**: es la que reciben las personas nuevas la primera vez.
 
 ### 4. Dirección de la app
-1. **Authentication** → **URL Configuration**.
+1. **Authentication** → **URL Configuration**: https://supabase.com/dashboard/project/heaenlyhsgnuahbgawnv/auth/url-configuration
 2. En **Site URL** pon `https://gllm57.github.io/laboratorio-ifvg/`.
 
 ### 5. Pasarme las dos claves
