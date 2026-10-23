@@ -52,8 +52,8 @@
 
   // ---------- Navegación ----------
   const VIEWS = ['inicio', 'ruta', 'estrategia', 'glosario', 'practica', 'simulador', 'diario', 'bienvenida'];
-  // Cada vista pertenece a una de las 4 pestañas: Hoy, Aprender, Practicar, Progreso
-  const TAB = { inicio: 'inicio', ruta: 'ruta', estrategia: 'ruta', glosario: 'ruta', practica: 'practica', simulador: 'practica', diario: 'diario', bienvenida: '' };
+  // Cada vista pertenece a una pestaña: Hoy, Aprender, Simulador (botón central), Practicar, Progreso
+  const TAB = { inicio: 'inicio', ruta: 'ruta', estrategia: 'ruta', glosario: 'ruta', practica: 'practica', simulador: 'simulador', diario: 'diario', bienvenida: '' };
   let view = 'inicio', lessonDay = null;
   // Posición de scroll por pantalla: al volver de una lección a la ruta, sigues donde estabas
   const scrollMem = {};
@@ -62,7 +62,7 @@
   function moveInd(instant) {
     const nav = $('.nav'), ind = $('.nav-ind'), a = nav && nav.querySelector('a[aria-current="page"]');
     if (!ind) return;
-    if (!a) { ind.style.width = '0px'; return; }
+    if (!a || a.classList.contains('fab')) { ind.style.width = '0px'; return; }
     nav.classList.toggle('instant', !!instant);
     ind.style.width = a.offsetWidth + 'px'; ind.style.height = a.offsetHeight + 'px';
     ind.style.transform = `translate(${a.offsetLeft}px, ${a.offsetTop}px)`;
@@ -111,6 +111,7 @@
     const main = $('#main');
     main.innerHTML = '';
     const wasSim = document.body.classList.contains('in-sim');
+    document.body.dataset.view = lessonDay ? 'dia' : view;
     document.body.classList.toggle('in-sim', view === 'simulador');
     if (view !== 'simulador') document.body.classList.remove('sx-live');
     if (wasSim && view !== 'simulador') moveInd(true); // la barra estaba oculta: recolocar el indicador
@@ -179,23 +180,46 @@
       { k: 'sim', n: 3, small: 'Sesión simulada', title: S.simcfg.sess === 'asia' ? 'Sesión Asia 20:00–21:30' : 'Sesión NY AM 9:30–11:00', href: '#simulador', cta: SIM && !SIM.done ? 'Continuar la sesión' : 'Empezar la sesión' },
     ];
     const doneN = plan.filter((x) => doneToday(x.k)).length;
-    m.appendChild(H(`<section class="g-hero">
-      <div class="g-row"><span class="pill-dark ${ny.open ? 'live' : ''}"><i></i>${ny.text}</span></div>
-      <h1>${(() => { const h = new Date().getHours(); return h < 6 ? 'Buenas noches.' : h < 13 ? 'Buenos días.' : h < 20 ? 'Buenas tardes.' : 'Buenas noches.'; })()}<br>${doneN === 3 ? '<b>Plan de hoy completo.</b>' : `Te quedan <b>${3 - doneN} ${3 - doneN === 1 ? 'paso' : 'pasos'}</b>${due.length ? ` y <b>${Math.min(3, due.length)} ${due.length === 1 ? 'repaso' : 'repasos'}</b>` : ''} hoy.`}</h1>
-      <div class="lvl-card">
-        <div class="lvl-top"><span><small>Tu nivel</small><b>${cur.n} · ${cur.name}</b></span><span class="xp">${S.xp.toLocaleString('es-ES')} <small>XP</small></span></div>
-        <i class="gbar"><i style="width:${pct}%"></i></i>
-        <small>${next ? `Para ${next.name}: ${pend ? pend[0].toLowerCase() : 'casi listo'}` : 'Nivel máximo alcanzado'}</small>
-      </div>
-    </section>`));
-    const pl = H(`<section class="card"><div class="card-head"><h2>Plan de hoy</h2><span class="pill ${doneN === 3 ? 'ok' : ''}">${doneN} de 3</span></div><div class="plan-list">${plan.map((x) => `
-      <${x.href ? `a href="${x.href}"` : `button type="button" data-ex="${x.ex}"`} class="plan-item ${doneToday(x.k) ? 'done' : ''}">
-        <span class="pn">${doneToday(x.k) ? '✓' : x.n}</span>
-        <span class="pt"><small>${x.small}</small><b>${esc(x.title)}</b>${x.why ? `<em>${esc(x.why)}</em>` : ''}</span>
-        <span class="pc">${doneToday(x.k) ? 'Hecho' : x.cta} ›</span>
-      </${x.href ? 'a' : 'button'}>`).join('')}</div></section>`);
-    m.appendChild(pl);
-    pl.querySelector('[data-ex]').onclick = (e) => { EX = { active: true, id: e.currentTarget.dataset.ex, k: 0, ok: 0, round: null }; location.hash = 'practica'; };
+    // Cabecera propia: anillo de nivel, fecha y cuenta
+    const now = new Date(), WD = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const me = SYNC.me;
+    m.appendChild(H(`<header class="dash-head">
+      <span class="lvl-ring" style="--p:${pct}" aria-label="Nivel ${cur.n}, ${pct} % hacia el siguiente"><b>${pct}</b></span>
+      <span class="dh-t"><b>${now.getDate()} <span>${WD[now.getDay()]}</span></b><small>Nivel ${cur.n} · ${cur.name} · ${S.xp.toLocaleString('es-ES')} XP</small></span>
+      <a class="dh-acct ${SYNC.state === 'ok' ? 'ok' : ''}" id="dh-acct" href="#diario" aria-label="Tu cuenta">${me && me.avatarUrl ? `<img src="${esc(me.avatarUrl)}" alt="">` : '<svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 18.5c1.2-3.2 3.6-4.8 6.5-4.8s5.3 1.6 6.5 4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'}</a>
+    </header>`));
+    // Semana actual: un punto en cada día con actividad
+    const mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    const week = [...Array(7)].map((_, k) => { const d = new Date(mon); d.setDate(mon.getDate() + k); return d; });
+    m.appendChild(H(`<nav class="week" aria-label="Esta semana">${week.map((d) => { const key = today(d), isT = key === today(), fut = d > now && !isT;
+      return `<span class="wd ${isT ? 'today' : ''} ${fut ? 'fut' : ''}" aria-label="${WD[d.getDay()]} ${d.getDate()}${S.act[key] ? ', practicaste' : ''}"><small>${'DLMMJVS'[d.getDay()]}</small><b>${d.getDate()}</b><i class="${S.act[key] ? 'on' : ''}"></i></span>`; }).join('')}</nav>`));
+    // Saludo
+    const hr = now.getHours(), hola = hr < 6 ? 'Buenas noches.' : hr < 13 ? 'Buenos días.' : hr < 20 ? 'Buenas tardes.' : 'Buenas noches.';
+    const nRev = Math.min(3, due.length);
+    m.appendChild(H(`<h1 class="greet">${hola}<br>${doneN === 3 ? '<b>Plan de hoy completo.</b>' : `Te quedan <b>${3 - doneN} ${3 - doneN === 1 ? 'paso' : 'pasos'}</b>${nRev ? `<br>y <b>${nRev} ${nRev === 1 ? 'repaso' : 'repasos'}</b>` : ''} hoy.`}</h1>`));
+    // Chips de estado
+    const hist = Object.values(S.ex).map((x) => (x.hist || []).slice(-3)).filter((h) => h.length);
+    const prec = hist.length ? Math.round(hist.reduce((a, h) => a + h.reduce((q, w) => q + w, 0) / h.length, 0) / hist.length) : null;
+    const st = streak(), last5 = S.sims.slice(-5), disc = last5.length ? Math.round(last5.reduce((a, x) => a + x.score, 0) / last5.length) : null;
+    m.appendChild(H(`<div class="dchips">
+      <span class="dchip"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1.5c.6 2.4 3.5 3.6 3.5 6.6A3.5 3.5 0 0 1 3.5 8c0-1.4.7-2.3 1.4-3 .2 1 .8 1.6 1.4 1.8C6.2 4.6 6.4 3 7 1.5z" fill="#ff6d29"/></svg>Racha ${st} ${st === 1 ? 'día' : 'días'}</span>
+      ${prec != null ? `<span class="dchip"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.2" fill="none" stroke="#8fd9a8" stroke-width="1.6"/><circle cx="7" cy="7" r="1.8" fill="#8fd9a8"/></svg>Precisión ${prec} %</span>` : ''}
+      <span class="dchip ${ny.open ? 'live' : ''}"><i></i>${ny.text}</span>
+    </div>`));
+    // Misión de hoy: el siguiente paso pendiente del plan
+    const nx = plan.find((x) => !doneToday(x.k)), stepN = nx ? plan.indexOf(nx) + 1 : 3;
+    const mis = H(`<section class="mission" aria-label="Misión de hoy">
+      <div class="ms-top"><small>${nx ? `Misión de hoy · paso ${stepN} de 3` : 'Misión de hoy · completa'}</small><span class="segs">${plan.map((x) => `<i class="${doneToday(x.k) ? 'on' : x === nx ? 'now' : ''}"></i>`).join('')}</span></div>
+      <div class="ms-body"><b>${nx ? esc(nx.title) : '¡Hecho por hoy!'}</b><span>${nx ? esc(nx.why || nx.small) : 'Vuelve mañana o repasa lo que falló en Progreso.'}</span></div>
+      ${nx ? (nx.href ? `<a class="ms-cta" href="${nx.href}">${nx.cta} <span aria-hidden="true">→</span></a>` : `<button class="ms-cta" type="button" data-ex="${nx.ex}">${nx.cta} <span aria-hidden="true">→</span></button>`) : `<a class="ms-cta" href="#diario">Ver mi progreso <span aria-hidden="true">→</span></a>`}
+      <div class="ms-steps">${plan.map((x) => `<${x.href ? `a href="${x.href}"` : `button type="button" data-ex="${x.ex}"`} class="${doneToday(x.k) ? 'done' : ''}">${doneToday(x.k) ? '✓ ' : ''}${x.small.replace('Práctica recomendada', 'Ejercicio').replace('Sesión simulada', 'Sesión')}</${x.href ? 'a' : 'button'}>`).join('')}</div>
+    </section>`);
+    m.appendChild(mis);
+    mis.querySelectorAll('[data-ex]').forEach((b) => b.onclick = (e) => { EX = { active: true, id: e.currentTarget.dataset.ex, k: 0, ok: 0, round: null }; location.hash = 'practica'; });
+    // Cuatro casillas de un vistazo
+    const nLess = Object.values(S.lessons).filter((x) => x.passed).length;
+    m.appendChild(H(`<div class="dtiles">${[[`${nLess}/50`, 'Lecciones', '#ruta'], [prec != null ? prec + ' %' : '—', 'Precisión', '#practica'], [String(S.sims.length), 'Sesiones', '#diario'], [disc != null ? String(disc) : '—', 'Disciplina', '#diario']]
+      .map(([v, l, h]) => `<a class="dtile" href="${h}"><b>${v}</b><small>${l}</small></a>`).join('')}</div>`));
     // Antes de operar: estado emocional
     const ci = S.checkin[today()];
     const ckCard = H(`<section class="card" id="checkin"><div class="card-head"><h2>Antes de operar</h2><span class="muted small">30 segundos</span></div><div id="ck-body"></div></section>`);
@@ -240,21 +264,38 @@
   }
 
   // ---------- Aprender ----------
+  const readMins = (L) => { const T = (window.THEORY || {})[L.d] || { secs: [], ej: '' }; return Math.max(2, Math.round((L.sum + T.secs.map((x) => x.p).join(' ') + (T.ej || '')).split(/\s+/).length / 180)); };
   function vPath(m) {
-    const nd = nextLessonDay(), NL = window.LESSONS.find((l) => l.d === nd);
-    m.appendChild(H(`<header class="page-head"><h1>Aprender</h1><p class="lead">La ruta de 50 días, la ficha de la estrategia y el glosario.</p></header>`));
-    m.appendChild(H(`<a class="g-card" href="#dia${nd}"><small>Continuar · Día ${nd}</small><b>${esc(NL.t)}</b><i>›</i></a>`));
-    m.appendChild(H(`<section class="quick2"><a class="act" href="#estrategia"><i>★</i><span><small>Consulta rápida</small><b>Ficha de la estrategia</b><em>Modelos, plan y examen</em></span></a><a class="act lav" href="#glosario"><i>?</i><span><small>${window.GLOSSARY.length} términos</small><b>Glosario</b><em>FVG, IFVG, PDH…</em></span></a></section>`));
+    const nd = nextLessonDay(), passed = (d) => !!S.lessons[d]?.passed;
+    const total = Object.values(S.lessons).filter((x) => x.passed).length, due = dueReviews().length;
+    m.appendChild(H(`<header class="page-head path-head"><div class="ph-row"><h1>Aprender</h1><span class="muted small">${total} de 50 días</span></div>
+      <div class="ph-bars" aria-hidden="true">${window.PHASES.map((p) => { const n = p.days[1] - p.days[0] + 1, k = daysDone(p.days[0], p.days[1]); return `<i><i style="width:${k / n * 100}%" class="${nd >= p.days[0] && nd <= p.days[1] ? 'cur' : ''}"></i></i>`; }).join('')}</div>
+      <nav class="ph-chips" aria-label="Aprender"><a class="on" href="#ruta" aria-current="page">Ruta</a><a href="#estrategia">Estrategia</a><a href="#glosario">Glosario</a>${due ? `<a href="#inicio">Repasos · ${due}</a>` : ''}</nav></header>`));
+    // Camino en zigzag: cada día es un círculo; el actual brilla y muestra su tarjeta
+    const XS = [50, 72, 82, 72, 50, 28, 18, 28], ROW = 92;
     for (const p of window.PHASES) {
       const ls = window.LESSONS.filter((l) => l.d >= p.days[0] && l.d <= p.days[1]);
-      const k = daysDone(p.days[0], p.days[1]), pc = Math.round(k / ls.length * 100);
-      const stt = pc === 100 ? ['Completa', 'pos'] : pc ? ['En curso', 'acc-t'] : ['Pendiente', 'muted'];
-      m.appendChild(H(`<section class="card phase"><div class="card-head line"><h2>${p.name}</h2><span class="muted small">Fase ${p.id}</span></div>
-        <p class="muted small">${p.goal}</p>
-        <i class="gbar big"><i style="width:${pc}%"></i></i>
-        <div class="stats3"><span><small>Días</small>${p.days[0]}–${p.days[1]}</span><span><small>Completados</small>${k} de ${ls.length}</span><span><small>Estado</small><b class="${stt[1]}">${stt[0]}</b></span></div>
-        <div class="days">${ls.map((l) => `<a class="day ${S.lessons[l.d]?.passed ? 'done' : ''} ${l.d === nd ? 'now' : ''}" href="#dia${l.d}"><span class="dn">${l.d}</span><span class="dt">${esc(l.t)}</span></a>`).join('')}</div></section>`));
+      const k = daysDone(p.days[0], p.days[1]);
+      const CARD = 150, ci = ls.findIndex((l) => l.d === nd); // la tarjeta del día actual va debajo de su círculo
+      const pts = ls.map((l, i) => [XS[(l.d - 1) % XS.length], i * ROW + ROW / 2 + (ci >= 0 && i > ci ? CARD : 0)]);
+      const H_ = ls.length * ROW + (ci >= 0 ? CARD : 0);
+      const lastDone = ls.reduce((a, l, i) => (passed(l.d) || l.d === nd ? i : a), -1);
+      const line = (a) => a.length > 1 ? 'M' + a.map(([x, y]) => `${x} ${y}`).join(' L') : '';
+      m.appendChild(H(`<section class="trail-phase" aria-label="Fase ${p.id}: ${esc(p.name)}">
+        <div class="tp-head"><span></span><b>Fase ${p.id} · ${esc(p.name)}</b><span></span></div>
+        <p class="tp-goal">${esc(p.goal)} · ${k} de ${ls.length}</p>
+        <div class="trail" style="height:${H_}px">
+          <svg class="trail-svg" viewBox="0 0 100 ${H_}" preserveAspectRatio="none" aria-hidden="true">
+            <path d="${line(pts.slice(0, lastDone + 1))}" class="tr-done" vector-effect="non-scaling-stroke"/>
+            <path d="${line(pts.slice(Math.max(0, lastDone)))}" class="tr-todo" vector-effect="non-scaling-stroke"/>
+          </svg>
+          ${ls.map((l, i) => { const [x, y] = pts[i], done = passed(l.d), cur = l.d === nd, side = x > 50 ? 'l' : 'r';
+            return `<a class="node ${done ? 'done' : ''} ${cur ? 'cur' : ''}" href="#dia${l.d}" style="left:${x}%;top:${y}px" aria-label="Día ${l.d}: ${esc(l.t)}${done ? ', completado' : cur ? ', el que toca' : ''}">${done ? '✓' : l.d}</a>
+              ${cur ? `<div class="node-card" style="top:${y + 50}px"><small>Día ${l.d} · ${readMins(l)} min</small><b>${esc(l.t)}</b><a class="nc-go" href="#dia${l.d}">Empezar</a></div>`
+                : `<span class="node-cap ${side}" style="top:${y}px;${side === 'l' ? `right:calc(${100 - x}% + 36px)` : `left:calc(${x}% + 36px)`}">${esc(l.t)}</span>`}`; }).join('')}
+        </div></section>`));
     }
+    if (scrollMem.ruta == null) setTimeout(() => { const c = $('.node.cur'); if (c && view === 'ruta' && !lessonDay) c.scrollIntoView({ block: 'center' }); }, 60);
   }
 
   function vGlossary(m) {
@@ -286,8 +327,7 @@
     const T = (window.THEORY || {})[L.d] || { secs: [], err: [], ej: '' };
     if (S.last !== L.d) { S.last = L.d; save(); }
     const st = S.lessons[L.d] || {};
-    const words = (L.sum + T.secs.map((x) => x.p).join(' ') + (T.ej || '')).split(/\s+/).length;
-    const mins = Math.max(2, Math.round(words / 180));
+    const mins = readMins(L);
     const usedInSecs = new Set(T.secs.map((x) => x.dg).filter(Boolean));
     const el = H(`<article class="lesson">
       <nav class="crumbs"><a href="#ruta">Ruta</a> / Fase ${P.id} · ${P.name}</nav>
@@ -625,6 +665,7 @@
         <span class="sx-price"><small>${SIM.S.mkt} · ${SIM.S.real ? 'real ' + SIM.S.date : 'simulado'}${SIM.S.sess === 'asia' ? ' · Asia' : ''}</small><b id="sx-price" class="mono"></b></span>
         <div id="sim-tf"></div>
       </div>
+      <div class="sx-chips scroll-x" id="sx-chips" role="button" tabindex="0" aria-label="Checklist: abrir detalle"></div>
       <div class="sx-chartwrap" id="sx-wrap"><div class="sim-chart" id="sim-chart"></div><div class="sx-over" id="sx-over"></div></div>
       <div class="sx-prog" aria-label="Progreso de la sesión"><div class="track"><i class="win"></i><i class="fill" id="sx-fill"></i><i class="knob" id="sx-knob"></i></div><div class="lbls"><span class="a">${E.hhmm(0)}</span><span class="b">${E.hhmm(E.OPEN)}</span><span class="c">${E.hhmm(E.WIN_END)}</span></div></div>
       <div class="sx-dock" id="sim-ctrl"></div>
@@ -648,6 +689,8 @@
     $('#s-assist').addEventListener('change', (e) => { SIM.assist = e.target.checked; simDraw(); });
     const side = (on) => { SIM.side = on; $('#sx').classList.toggle('side-open', on); };
     $('#sx-ring').onclick = () => side(!SIM.side);
+    $('#sx-chips').onclick = () => side(true);
+    $('#sx-chips').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); side(true); } };
     $('#sx-scrim').onclick = () => side(false);
     $('#sx-grip').onclick = () => side(false);
     $('#sx-exit').onclick = () => { stopAuto(); location.hash = 'inicio'; };
@@ -762,12 +805,14 @@
     const el = $('#live'), ring = $('#sx-ring'); if (!el) return;
     if (!SIM.assist) {
       el.innerHTML = '<h2>Checklist</h2><p class="small muted">Ayudas desactivadas. Actívalas en “Cuenta y ayudas”.</p>';
-      ring.querySelector('span').textContent = '—'; ring.querySelector('i').style.setProperty('--p', '0%'); return;
+      ring.querySelector('span').textContent = '—'; ring.querySelector('i').style.setProperty('--p', '0%'); if ($('#sx-chips')) $('#sx-chips').innerHTML = '<span class="no">Ayudas desactivadas</span>'; return;
     }
     const items = checklist(), n = items.filter((x) => x[0] === 'ok').length;
     ring.querySelector('span').textContent = `${n}/5`;
     ring.querySelector('i').style.setProperty('--p', `${n * 20}%`);
     ring.classList.toggle('full', n === 5);
+    const SH = { 'Horario operativo': 'Horario', 'Toma de liquidez': 'Liquidez', 'IFVG': 'IFVG', 'Objetivo claro': 'Objetivo', 'Un trade por sesión': '1 trade' };
+    const chips = $('#sx-chips'); if (chips) chips.innerHTML = items.map(([st, l]) => `<span class="${st}">${st === 'ok' ? '✓' : st === 'wait' ? '…' : '·'} ${SH[l] || l}</span>`).join('');
     el.innerHTML = `<h2>Checklist de la estrategia <span>${n} de 5</span></h2><ul>${items.map(([st, l, d]) => `<li class="${st}"><i>${st === 'ok' ? '✓' : st === 'wait' ? '…' : ''}</i><span><b>${l}</b><small>${esc(d)}</small></span></li>`).join('')}</ul>`;
   }
 
@@ -925,27 +970,40 @@
   function orderPanel() {
     const o = SIM.order, buy = o.dir > 0, { k, html } = orderNums(o);
     return `<form class="sx-order ${buy ? 'is-buy' : 'is-sell'}" id="ord">
-      <div class="o-head"><span><b>${buy ? 'Compra' : 'Venta'} a mercado</b><small class="mono">Entrada ${fmt(o.entry)} · ${E.hhmm(SIM.t)}</small></span></div>
+      <div class="o-head"><span><b>${buy ? 'Compra' : 'Venta'} a mercado</b><small class="mono">Entrada ${fmt(o.entry)} · ${E.hhmm(SIM.t)}</small></span>
+        <span class="o-dir" role="group" aria-label="Dirección"><button type="button" data-d="1" class="${buy ? 'on' : ''}" aria-pressed="${buy}">Compra</button><button type="button" data-d="-1" class="${buy ? '' : 'on'}" aria-pressed="${!buy}">Venta</button></span></div>
       <div id="o-nums">${html}</div>
       <div class="risk-row"><span>Riesgo</span>${[0.5, 0.6, 0.7].map((r) => `<button type="button" class="rk ${Math.abs(o.risk - r) < 1e-9 ? 'on' : ''}" data-r="${r}">${String(r).replace('.', ',')} %</button>`).join('')}</div>
-      <div class="sx-row"><button class="btn ghost" type="button" id="o-cancel">Cancelar</button><button class="btn ${buy ? 'buy' : 'sell'} tall" type="submit" id="o-ok" ${k.err ? 'disabled' : ''}>Confirmar ${buy ? 'compra' : 'venta'}</button></div>
+      <div class="slide ${buy ? 'is-buy' : 'is-sell'} ${k.err ? 'dis' : ''}" id="o-slide"><span class="slide-t">Desliza para ${buy ? 'comprar' : 'vender'} <i aria-hidden="true">›››</i></span><button type="button" class="slide-k" id="o-ok" aria-label="Confirmar ${buy ? 'compra' : 'venta'} (desliza a la derecha o pulsa Enter)" ${k.err ? 'disabled' : ''}><svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10M11 6l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+      <button class="link" type="button" id="o-cancel">Cancelar</button>
     </form>`;
   }
   function refreshOrderNums() {
     const o = SIM.order; if (!o || !$('#o-nums')) return;
     const { k, html } = orderNums(o);
-    $('#o-nums').innerHTML = html; $('#o-ok').disabled = !!k.err;
+    $('#o-nums').innerHTML = html; $('#o-ok').disabled = !!k.err; $('#o-slide').classList.toggle('dis', !!k.err);
   }
   function bindOrder() {
     const o = SIM.order;
     $('#sim-ctrl').querySelectorAll('.rk').forEach((b) => b.onclick = () => { o.risk = +b.dataset.r; SIM.risk = o.risk; simCtrl(); });
     $('#o-cancel').onclick = () => { SIM.order = null; SIM.warn = ''; simDraw(); };
-    $('#ord').addEventListener('submit', (e) => {
-      e.preventDefault();
+    $('#sim-ctrl').querySelectorAll('.o-dir button').forEach((b) => b.onclick = () => { if (+b.dataset.d !== o.dir) openOrder(+b.dataset.d); });
+    // Deslizar para confirmar: evita entrar por un toque accidental. Con teclado, Enter sobre el botón confirma.
+    const knob = $('#o-ok'), track = $('#o-slide');
+    let sx = null, dx = 0;
+    const maxX = () => track.clientWidth - knob.offsetWidth - 10;
+    const setX = (x) => { dx = Math.max(0, Math.min(maxX(), x)); knob.style.transform = `translateX(${dx}px)`; track.style.setProperty('--f', (dx / maxX()).toFixed(3)); };
+    knob.addEventListener('pointerdown', (e) => { if (knob.disabled) return; sx = e.clientX - dx; knob.setPointerCapture(e.pointerId); knob.classList.add('drag'); });
+    knob.addEventListener('pointermove', (e) => { if (sx != null) setX(e.clientX - sx); });
+    const end = () => { if (sx == null) return; sx = null; knob.classList.remove('drag'); if (dx >= maxX() * 0.85) { setX(maxX()); confirmOrder(); } else { knob.style.transition = 'transform .25s'; setX(0); setTimeout(() => { knob.style.transition = ''; }, 260); } };
+    knob.addEventListener('pointerup', end); knob.addEventListener('pointercancel', end);
+    knob.addEventListener('click', (e) => { if (e.detail === 0) confirmOrder(); else if (dx < 4) { track.classList.remove('hint'); void track.offsetWidth; track.classList.add('hint'); } });
+    $('#ord').addEventListener('submit', (e) => e.preventDefault());
+    function confirmOrder() {
       const kk = orderCalc(o); if (kk.err) return;
       SIM.trades.push({ t: SIM.t, dir: o.dir, entry: o.entry, sl: o.sl, tp: o.tp, qty: kk.qty, riskPct: kk.realPct, riskSel: o.risk, usdPerR: kk.qty * kk.stopPts * kk.pv });
       SIM.order = null; SIM.warn = ''; buzz(25); simDraw();
-    });
+    }
   }
   // Toque en el gráfico durante la orden: mueve la línea más cercana (stop u objetivo)
   function orderPick(q) {
@@ -1038,16 +1096,39 @@
     const { grade, outcome, sys } = SIM.result;
     const tier = grade.score >= 85 ? ['Excelente', 'good'] : grade.score >= 70 ? ['Bien', 'good'] : grade.score >= 50 ? ['Mejorable', 'mid'] : ['Fuera del plan', 'bad'];
     const tr = SIM.trades[0];
-    host.innerHTML = `<section class="panel result">
-      <div class="res-head"><div class="score ${tier[1]}"><b>${grade.score}</b><span>/100 disciplina</span></div>
-        <div><h2>${tier[0]}</h2><p>${tr ? `${tr.dir > 0 ? 'Compra' : 'Venta'} a las ${E.hhmm(tr.t)} · ${tr.reason} · <b class="${outcome >= 0 ? 'pos' : 'neg'}">${outcome >= 0 ? '+' : ''}${outcome.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} R</b> (${SIM.trades.reduce((q, x) => q + (x.R || 0) * x.usdPerR, 0).toLocaleString('es-ES', { maximumFractionDigits: 0 })} $)` : 'Sin operaciones'}</p>
-        <p class="muted small">La nota mide si seguiste el plan, no si ganaste. ${sys ? `El sistema detectó el primer setup a las ${E.hhmm(sys.t)} (Modelo ${sys.model}).` : 'El sistema no detectó setups válidos en la ventana.'}</p></div></div>
-      <button class="btn pri wide" type="button" id="rp-start">Ver repetición guiada paso a paso</button>
-      <ul class="grade">${grade.items.map((it) => `<li class="${it.ok ? 'ok' : it.pts > 0 ? 'mid' : 'no'}"><div><b>${it.label}</b><p>${esc(it.msg)}</p>${!it.ok && RULE_DAY[it.key] ? `<a class="small" href="#dia${RULE_DAY[it.key]}">Repasar: día ${RULE_DAY[it.key]} ›</a>` : ''}</div><span class="mono">${it.pts}/${it.max}</span></li>`).join('')}</ul>
+    const C = SIM.S.C, lost = (it) => it.max - it.pts;
+    const RULE_EX = { sweep: 'sweep', ifvg: 'ifvg', sl: 'stop', tp: 'target', risk: 'calc' };
+    const SHORT = { time: 'Horario operativo', sweep: 'Esperaste el barrido', ifvg: 'Entrada en el IFVG', sl: 'Stop lógico', tp: 'Objetivo claro', risk: 'Riesgo correcto', one: 'Un solo trade' };
+    // Línea de tiempo: barrido → IFVG → entrada → salida (o el setup que el plan habría tomado)
+    let steps;
+    if (tr) {
+      const sw = E.sweeps(C, tr.t + 1).filter((x) => x.dir === tr.dir && x.j <= tr.t).pop();
+      const okK = (k) => (grade.items.find((x) => x.key === k) || {}).ok;
+      steps = [['Barrido', sw ? E.hhmm(sw.j) : 'no hubo', okK('sweep') ? 'ok' : 'no'], ['IFVG', okK('ifvg') ? 'sí' : 'no', okK('ifvg') ? 'ok' : 'no'], ['Entrada', E.hhmm(tr.t), 'ok'],
+        [tr.reason === 'Take profit' ? 'TP' : tr.reason === 'Stop loss' ? 'SL' : tr.reason === 'Break even' ? 'BE' : 'Salida', tr.exitI != null ? E.hhmm(tr.exitI) : '—', tr.R > 0 ? 'win' : tr.R < 0 ? 'loss' : 'ok']];
+    } else if (sys) steps = [['Barrido', E.hhmm(sys.sweep.j), 'ok'], ['IFVG', E.hhmm(sys.t), 'ok'], ['Entrada', 'no entraste', 'no'], ['Plan', `+${sys.rr.toLocaleString('es-ES', { maximumFractionDigits: 1 })} R posible`, 'no']];
+    else steps = [['Barrido', '—', 'ok'], ['IFVG', '—', 'ok'], ['Paciencia', 'no operaste', 'win'], ['Plan', 'sin setup', 'win']];
+    const good = grade.items.filter((x) => x.ok), bad = grade.items.filter((x) => !x.ok).sort((a, b) => lost(b) - lost(a));
+    const usd = SIM.trades.reduce((q, x) => q + (x.R || 0) * x.usdPerR, 0);
+    host.innerHTML = `<section class="panel result coach">
+      <div class="co-head">
+        <span class="co-ring ${tier[1]}" style="--p:${grade.score}"><span><b>${grade.score}</b><small>disciplina</small></span></span>
+        <div class="co-t"><h2>${tier[0] === 'Bien' ? 'Bien ejecutado' : tier[0]}</h2>
+          <p>${tr ? `${tr.dir > 0 ? 'Compra' : 'Venta'} ${E.hhmm(tr.t)} · ${esc(tr.reason || 'abierta')}` : sys ? 'No operaste y había setup' : 'Sin setup: no operar era lo correcto'}</p>
+          ${tr ? `<span class="co-r ${outcome >= 0 ? 'pos' : 'neg'}">${outcome >= 0 ? '+' : ''}${outcome.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} R · ${usd >= 0 ? '+' : ''}${Math.round(usd).toLocaleString('es-ES')} $</span>` : ''}</div>
+      </div>
+      <p class="muted small">La nota mide si seguiste el plan, no si ganaste. ${sys ? `El primer setup del plan apareció a las ${E.hhmm(sys.t)} (Modelo ${sys.model}).` : 'El sistema no detectó setups válidos en la ventana.'}</p>
+      <ol class="co-line" aria-label="Cómo fue la sesión">${steps.map(([l, t, k], i) => `<li class="${k}"><i>${k === 'win' ? '✓' : k === 'loss' ? '×' : k === 'no' ? '!' : i + 1}</i><b>${l}</b><small>${esc(t)}</small></li>`).join('')}</ol>
+      ${good.length ? `<div class="co-good"><h3>Lo que hiciste bien</h3><div>${good.map((it) => `<span>✓ ${SHORT[it.key] || esc(it.label)}</span>`).join('')}</div></div>` : ''}
+      ${bad.length ? `<h3 class="co-h">A mejorar</h3>${bad.slice(0, 3).map((it) => `<article class="co-fix">
+        <div class="cf-top"><b>${esc(it.label)}</b><span>−${lost(it)} pts</span></div><p>${esc(it.msg)}</p>
+        <div class="cf-links">${RULE_DAY[it.key] ? `<a href="#dia${RULE_DAY[it.key]}">Repasar día ${RULE_DAY[it.key]} ›</a>` : ''}${RULE_EX[it.key] ? `<button type="button" data-ex="${RULE_EX[it.key]}">Practicar: ${esc(EXS.find((x) => x.id === RULE_EX[it.key]).t)} ›</button>` : ''}</div></article>`).join('')}` : '<p class="ok-box"><b>Sesión de manual.</b> Cumpliste todas las reglas del plan.</p>'}
+      <button class="btn pri wide tall" type="button" id="rp-start"><b>Ver repetición guiada</b><small>El setup del plan y tu operación, paso a paso</small></button>
       <label for="sim-note" class="note-l">Nota para tu diario (emociones, qué mejorar)</label>
       <textarea id="sim-note" rows="2" placeholder="Ej.: entré antes del cierre de la vela por ansiedad"></textarea>
       <div class="row"><button class="btn" id="note-save" type="button">Guardar nota</button><span class="muted small" id="note-ok"></span></div>
     </section>`;
+    host.querySelectorAll('[data-ex]').forEach((b) => b.onclick = () => { EX = { active: true, id: b.dataset.ex, k: 0, ok: 0, round: null }; location.hash = 'practica'; });
     $('#note-save').onclick = () => { S.sims[SIM.recIdx].note = $('#sim-note').value.trim(); save(); $('#note-ok').textContent = 'Nota guardada en el diario.'; };
     $('#rp-start').onclick = () => { SIM.replay = 0; simDraw(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   }
@@ -1059,7 +1140,7 @@
   function vJournal(m) {
     const { cur, next } = currentLevel();
     m.appendChild(H(`<header class="page-head"><h1>Progreso</h1><p class="lead">Tu nivel, en qué fallas, tus estadísticas y el diario de sesiones.</p></header>`));
-    m.appendChild(H(`<section class="card acct" id="acct">${accountHTML()}</section>`));
+    m.appendChild(H(`<section class="card acct" id="acct">${accountHTML()}</section>`)); bindAccount();
     m.appendChild(H(`<section class="card"><div class="card-head"><h2>Nivel ${cur.n} · ${cur.name}</h2><span class="muted small">${S.xp.toLocaleString('es-ES')} XP · racha ${streak()}</span></div>
       <div class="ladder">${levels().map((l) => `<span class="${l.n <= cur.n ? 'on' : ''}">${l.n}</span>`).join('')}</div>
       ${next ? `<p class="small muted">Para ${next.name}:</p><ul class="reqs">${next.reqs.map(([t, v, g, u = '']) => `<li class="${v >= g ? 'ok' : ''}"><span>${t}</span><b>${v}${u} / ${g}${u}</b></li>`).join('')}</ul>` : '<p>Nivel máximo. Mantén una sesión diaria para conservar la consistencia.</p>'}</section>`));
@@ -1185,9 +1266,60 @@
     if (changed) { renderHeader(); if (view !== 'simulador' && !(view === 'practica' && EX)) render(); }
     drawAccount();
   }
+  // ---------- Cuentas propias con Supabase (fuera de Claude) ----------
+  // Se activan al rellenar config.js con la URL y la clave pública del proyecto (ver CUENTAS.md).
+  // Entrada sin contraseña: un código de 6 dígitos al email. Una fila por persona en la tabla `progress`, protegida por RLS.
+  const CFG = window.LAB_CONFIG || {};
+  const SUPA = CFG.supabaseUrl && CFG.supabaseAnonKey ? { url: String(CFG.supabaseUrl).replace(/\/+$/, ''), key: CFG.supabaseAnonKey } : null;
+  const AUTH_KEY = 'lab-ifvg-auth';
+  let AUTH = null; try { AUTH = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch (e) { /* sin almacenamiento */ }
+  const saveAuth = (a) => { AUTH = a; try { if (a) localStorage.setItem(AUTH_KEY, JSON.stringify(a)); else localStorage.removeItem(AUTH_KEY); } catch (e) { /* ignorar */ } };
+  async function supa(path, opt = {}, auth = true) {
+    if (auth && AUTH && AUTH.expires_at - 60 < Date.now() / 1000) await supaRefresh();
+    const r = await fetch(SUPA.url + path, { ...opt, headers: { apikey: SUPA.key, 'Content-Type': 'application/json', ...(auth && AUTH ? { Authorization: 'Bearer ' + AUTH.access_token } : {}), ...(opt.headers || {}) } });
+    const txt = await r.text(); let body = null; try { body = txt ? JSON.parse(txt) : null; } catch (e) { body = txt; }
+    if (!r.ok) { const err = new Error((body && (body.msg || body.message || body.error_description || body.error)) || 'HTTP ' + r.status); err.status = r.status; throw err; }
+    return body;
+  }
+  const setAuth = (b) => saveAuth({ access_token: b.access_token, refresh_token: b.refresh_token, expires_at: b.expires_at || Math.floor(Date.now() / 1000) + (b.expires_in || 3600), user: { id: b.user.id, email: b.user.email } });
+  async function supaRefresh() {
+    try { setAuth(await supa('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: JSON.stringify({ refresh_token: AUTH.refresh_token }) }, false)); }
+    catch (e) { if (e.status === 400 || e.status === 401) { saveAuth(null); SYNC.ref = null; SYNC.me = null; SYNC.state = 'signedout'; drawAccount(); } throw e; }
+  }
+  async function supaPull() {
+    if (!AUTH || !SYNC.ref) return;
+    try { const rows = await supa(`/rest/v1/progress?user_id=eq.${encodeURIComponent(AUTH.user.id)}&select=state`); onRemote(rows && rows[0] ? { exists: true, data: () => rows[0].state } : { exists: false }); }
+    catch (e) { if (SYNC.ref) { SYNC.state = 'err'; drawAccount(); } }
+  }
+  function supaConnect() {
+    SYNC.me = { name: AUTH.user.email, avatarUrl: '' };
+    SYNC.ref = { set: (d) => supa('/rest/v1/progress?on_conflict=user_id', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ user_id: AUTH.user.id, state: d, updated_at: new Date().toISOString() }) }) };
+    SYNC.state = 'connecting'; drawAccount(); supaPull();
+  }
+  // sin tiempo real: trae los cambios al volver a la app y cada minuto mientras está abierta
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && SUPA) supaPull(); });
+  setInterval(() => { if (SUPA && document.visibilityState === 'visible') supaPull(); }, 60000);
+  const LOGIN = { email: '', sent: false, msg: '', busy: false };
+  async function supaSendCode(email) {
+    LOGIN.busy = true; LOGIN.email = email; LOGIN.msg = ''; drawAccount();
+    try { await supa('/auth/v1/otp', { method: 'POST', body: JSON.stringify({ email, create_user: true }) }, false); LOGIN.sent = true; LOGIN.msg = `Te enviamos un código a ${email}. Revisa también el correo no deseado.`; }
+    catch (e) { LOGIN.msg = e.status === 429 ? 'Demasiados intentos seguidos. Espera un minuto y vuelve a pedir el código.' : 'No se pudo enviar el código: ' + e.message; }
+    LOGIN.busy = false; drawAccount();
+  }
+  async function supaVerify(token) {
+    LOGIN.busy = true; LOGIN.msg = ''; drawAccount();
+    try { setAuth(await supa('/auth/v1/verify', { method: 'POST', body: JSON.stringify({ type: 'email', email: LOGIN.email, token }) }, false)); LOGIN.sent = false; LOGIN.busy = false; supaConnect(); return; }
+    catch (e) { LOGIN.msg = 'El código no es válido o caducó. Pide uno nuevo.'; }
+    LOGIN.busy = false; drawAccount();
+  }
+  async function supaLogout() {
+    try { await supa('/auth/v1/logout', { method: 'POST' }); } catch (e) { /* la sesión local se borra igual */ }
+    saveAuth(null); SYNC.ref = null; SYNC.me = null; SYNC.state = 'signedout'; LOGIN.sent = false; drawAccount();
+  }
+
   async function syncStart() {
     const cl = window.claude;
-    if (!cl || typeof cl.use !== 'function') { if (!SYNC.tried) { SYNC.tried = true; setTimeout(syncStart, 1500); } else { SYNC.state = 'local'; drawAccount(); } return; }
+    if (!cl || typeof cl.use !== 'function') { if (!SYNC.tried) { SYNC.tried = true; setTimeout(syncStart, 1500); } else if (SUPA) { if (AUTH) supaConnect(); else { SYNC.state = 'signedout'; drawAccount(); } } else { SYNC.state = 'local'; drawAccount(); } return; }
     SYNC.state = 'connecting'; drawAccount();
     const [db, user] = await Promise.all([cl.use('db'), cl.use('user')]);
     const uid = user ? await user.id() : null;
@@ -1199,16 +1331,33 @@
   const ago = (t) => { const s = Math.round((Date.now() - t) / 1000); return s < 60 ? 'hace un momento' : s < 3600 ? `hace ${Math.round(s / 60)} min` : `hace ${Math.round(s / 3600)} h`; };
   function accountHTML() {
     const me = SYNC.me, on = SYNC.ref && SYNC.state !== 'local';
+    const av = `<span class="acct-av">${me && me.avatarUrl ? `<img src="${esc(me.avatarUrl)}" alt="">` : me && me.name ? esc(me.name[0].toUpperCase()) : '<svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 18.5c1.2-3.2 3.6-4.8 6.5-4.8s5.3 1.6 6.5 4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'}</span>`;
+    if (SUPA && !SYNC.ref && !(window.claude && window.claude.use)) {
+      return `<div class="acct-row">${av}<span class="acct-t"><b>Tu cuenta</b><small>Sin iniciar sesión · solo en este dispositivo</small></span></div>
+        <p class="small muted">Entra con tu email: te llega un código de 6 dígitos, sin contraseña. Tu progreso se guarda en tu cuenta y lo ves en el celular y en la PC.</p>
+        ${LOGIN.sent ? `<form class="lg-form" id="lg-code"><label for="lg-token" class="sr">Código</label><input id="lg-token" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="Código de 6 dígitos" required><button class="btn pri" ${LOGIN.busy ? 'disabled' : ''}>${LOGIN.busy ? 'Entrando…' : 'Entrar'}</button></form><button class="link small" type="button" id="lg-back">Usar otro email o pedir otro código</button>`
+          : `<form class="lg-form" id="lg-form"><label for="lg-email" class="sr">Email</label><input id="lg-email" type="email" autocomplete="email" placeholder="tu@email.com" value="${esc(LOGIN.email)}" required><button class="btn pri" ${LOGIN.busy ? 'disabled' : ''}>${LOGIN.busy ? 'Enviando…' : 'Enviarme un código'}</button></form>`}
+        ${LOGIN.msg ? `<p class="small lg-msg" role="status">${esc(LOGIN.msg)}</p>` : ''}`;
+    }
     const st = { ok: `Sincronizado · ${ago(SYNC.at)}`, connecting: 'Conectando con tu cuenta…', err: 'Sin conexión: se guarda aquí y se sube al volver', local: 'Solo en este dispositivo', off: 'Solo en este dispositivo' }[SYNC.state] || '';
     return `<div class="acct-row"><span class="acct-av">${me && me.avatarUrl ? `<img src="${esc(me.avatarUrl)}" alt="">` : '<svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 18.5c1.2-3.2 3.6-4.8 6.5-4.8s5.3 1.6 6.5 4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'}</span>
       <span class="acct-t"><b>${on ? esc((me && me.name) || 'Tu cuenta') : 'Tu cuenta'}</b><small class="${SYNC.state === 'ok' ? 'ok' : SYNC.state === 'err' ? 'warn' : ''}">${st}</small></span></div>
-      <p class="small muted">${on ? 'Tu progreso (lecciones, XP, ejercicios, sesiones y notas) se guarda en tu cuenta de Claude. Abre este mismo enlace en el celular o en la PC con tu cuenta y sigues donde lo dejaste.'
+      <p class="small muted">${on ? (AUTH && SUPA && !(window.claude && window.claude.use) ? 'Tu progreso (lecciones, XP, ejercicios, sesiones y notas) se guarda en tu cuenta. Entra con el mismo email en el celular o en la PC y sigues donde lo dejaste.' : 'Tu progreso (lecciones, XP, ejercicios, sesiones y notas) se guarda en tu cuenta de Claude. Abre este mismo enlace en el celular o en la PC con tu cuenta y sigues donde lo dejaste.')
         : `Para tener tu cuenta y seguir el avance en el celular y en la PC, abre la app desde tu enlace de Claude con tu cuenta iniciada. Para llevar lo que tienes aquí: copia la copia de seguridad (abajo) y pégala allí.`}</p>
-      ${on ? '' : `<a class="btn pri" href="${APP_URL}" target="_blank" rel="noopener">Abrir mi app con cuenta</a>`}`;
+      ${on ? (AUTH && SUPA ? '<button class="btn" type="button" id="lg-out">Cerrar sesión</button>' : '') : `<a class="btn pri" href="${APP_URL}" target="_blank" rel="noopener">Abrir mi app con cuenta</a>`}`;
+  }
+  function bindAccount() {
+    const f = $('#lg-form'), c = $('#lg-code'), o = $('#lg-out'), b = $('#lg-back');
+    if (f) f.onsubmit = (e) => { e.preventDefault(); const v = $('#lg-email').value.trim(); if (v) supaSendCode(v); };
+    if (c) c.onsubmit = (e) => { e.preventDefault(); const v = $('#lg-token').value.replace(/\D/g, ''); if (v.length === 6) supaVerify(v); };
+    if (b) b.onclick = () => { LOGIN.sent = false; LOGIN.msg = ''; drawAccount(); };
+    if (o) o.onclick = supaLogout;
   }
   function drawAccount() {
-    const el = $('#acct'); if (el) el.innerHTML = accountHTML();
+    const el = $('#acct'); if (el) { el.innerHTML = accountHTML(); bindAccount(); }
     const av = $('#hdr-acct');
+    const dh = $('#dh-acct');
+    if (dh) { dh.classList.toggle('ok', SYNC.state === 'ok'); if (SYNC.me && SYNC.me.avatarUrl && !dh.querySelector('img')) dh.innerHTML = `<img src="${esc(SYNC.me.avatarUrl)}" alt="">`; }
     if (av) { av.hidden = !SYNC.ref; av.classList.toggle('ok', SYNC.state === 'ok'); if (SYNC.me && SYNC.me.avatarUrl && !av.querySelector('img')) av.innerHTML = `<img src="${esc(SYNC.me.avatarUrl)}" alt="">`; }
   }
 
