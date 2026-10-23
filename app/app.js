@@ -1302,8 +1302,10 @@
   const LOGIN = { email: '', sent: false, msg: '', busy: false };
   async function supaSendCode(email) {
     LOGIN.busy = true; LOGIN.email = email; LOGIN.msg = ''; drawAccount();
-    try { await supa('/auth/v1/otp', { method: 'POST', body: JSON.stringify({ email, create_user: true }) }, false); LOGIN.sent = true; LOGIN.msg = `Te enviamos un correo a ${email} (mira también en no deseado). Si trae un código, escríbelo aquí. Si trae un enlace, ábrelo en este mismo dispositivo y navegador.`; }
-    catch (e) { LOGIN.msg = e.status === 429 ? 'Demasiados intentos seguidos. Espera un minuto y vuelve a pedir el código.' : 'No se pudo enviar el código: ' + e.message; }
+    // el enlace del correo vuelve a esta misma dirección (Supabase lo acepta si el dominio coincide con la Site URL)
+    const back = /^https?:$/.test(location.protocol) ? '?redirect_to=' + encodeURIComponent(location.origin + location.pathname) : '';
+    try { await supa('/auth/v1/otp' + back, { method: 'POST', body: JSON.stringify({ email, create_user: true }) }, false); LOGIN.sent = true; LOGIN.msg = `Te enviamos un correo a ${email} (mira también en no deseado). Si trae un código, escríbelo aquí. Si trae un enlace, ábrelo en este mismo dispositivo y navegador.`; }
+    catch (e) { LOGIN.msg = e.status === 429 ? 'Se alcanzó el límite de correos por hora. Usa el último correo que te llegó o espera un rato y vuelve a pedirlo.' : 'No se pudo enviar el código: ' + e.message; }
     LOGIN.busy = false; drawAccount();
   }
   async function supaVerify(token) {
@@ -1368,7 +1370,7 @@
   if (SUPA && /(^|[#&])(access_token|error_description)=/.test(location.hash)) {
     const q = new URLSearchParams(location.hash.slice(1));
     history.replaceState(null, '', location.pathname + location.search + '#diario');
-    if (q.get('error_description')) LOGIN.msg = 'El enlace del email caducó o ya se usó. Pide un código nuevo.';
+    if (q.get('error_description')) LOGIN.msg = 'Ese enlace ya se usó o caducó (cada enlace sirve una sola vez). Usa el correo más reciente o pide uno nuevo.';
     else {
       const tok = { access_token: q.get('access_token'), refresh_token: q.get('refresh_token'), expires_in: +q.get('expires_in') || 3600, expires_at: +q.get('expires_at') || 0 };
       fetch(SUPA.url + '/auth/v1/user', { headers: { apikey: SUPA.key, Authorization: 'Bearer ' + tok.access_token } })
