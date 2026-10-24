@@ -842,8 +842,28 @@
     return steps;
   }
 
+  // Mientras corre la sesión el panel se actualiza en cada vela. Si solo cambian números (precio, R, posición),
+  // se actualizan esos textos sin recrear los botones: así un toque a mitad de una vela no se pierde.
+  const skel = (h) => h.replace(/\d+(?:[.,]\d+)*/g, '#');
+  const syncNodes = (a, b) => {
+    const ac = a.childNodes, bc = b.childNodes;
+    for (let i = 0; i < bc.length; i++) {
+      const x = ac[i], y = bc[i]; if (!x) return;
+      if (y.nodeType === 3) { if (x.nodeValue !== y.nodeValue) x.nodeValue = y.nodeValue; continue; }
+      if (y.nodeType !== 1) continue;
+      for (const at of y.attributes) if (x.getAttribute(at.name) !== at.value) x.setAttribute(at.name, at.value);
+      syncNodes(x, y);
+    }
+  };
+  function setDock(c, html, prev) {
+    const k = skel(html);
+    if (prev === k && c.firstChild) { const t = document.createElement('div'); t.innerHTML = html; syncNodes(c, t); }
+    else c.innerHTML = html;
+    c.__skel = k;
+  }
   function simCtrl() {
     const c = $('#sim-ctrl'); if (!c) return;
+    const prevSkel = c.__skel; c.__skel = null; // cualquier otro panel (orden, repetición, cierre) obliga a redibujar
     if (SIM.done && SIM.replay != null) {
       const steps = replaySteps(), i = SIM.replay, st = steps[i];
       c.innerHTML = `<div class="sx-replay"><div class="rp-head"><span class="pill mid">Paso ${i + 1} de ${steps.length}</span><button class="link small" type="button" id="rp-x">Salir</button></div><h2>${st.h}</h2><p>${esc(st.p)}</p>
@@ -859,7 +879,7 @@
     const player = `<div class="sx-player">
         <button class="btn sq" id="sim-speed" type="button" aria-label="Velocidad">×${sp}</button>
         <button class="btn" id="sim-step" type="button" aria-label="Avanzar 1 minuto">+1m</button>
-        <button class="btn play" id="sim-auto" type="button" aria-label="${autoT ? 'Pausar' : 'Reproducir'}">${autoT ? '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="5" y="4" width="4" height="14" rx="1.5"/><rect x="13" y="4" width="4" height="14" rx="1.5"/></svg>' : '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M7 4l11 7-11 7z"/></svg>'}</button>
+        <button class="btn play ${autoT ? 'on' : ''}" id="sim-auto" type="button" aria-pressed="${!!autoT}" aria-label="${autoT ? 'Pausar' : 'Reproducir'}">${autoT ? '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="5" y="4" width="4" height="14" rx="1.5"/><rect x="13" y="4" width="4" height="14" rx="1.5"/></svg>' : '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M7 4l11 7-11 7z"/></svg>'}</button>
         <button class="btn" id="sim-5" type="button" aria-label="Avanzar">${SIM.tf === 1 ? '+5m' : `+${SIM.tf}m`}</button>
         <button class="btn sq end" id="sim-end" type="button" aria-label="Terminar la sesión y evaluar">Evaluar</button>
       </div>`;
@@ -869,13 +889,13 @@
       const lo = Math.min(op.sl, op.tp), hi = Math.max(op.sl, op.tp), pos = Math.max(0, Math.min(1, (b.c - lo) / (hi - lo)));
       const entryPos = (op.entry - lo) / (hi - lo);
       const knob = (op.dir > 0 ? pos : 1 - pos) * 100, ePos = (op.dir > 0 ? entryPos : 1 - entryPos) * 100;
-      c.innerHTML = player + `<div class="sx-pos">
+      setDock(c, player + `<div class="sx-pos">
         <div class="pos-head"><span><b>${op.dir > 0 ? 'Compra' : 'Venta'} · ${op.qty} ${SIM.inst}</b><small>Entrada ${fmt(op.entry)} · ${E.hhmm(op.t)}${op.slNow === op.entry ? ' · stop en BE' : ''}</small></span>
           <span class="pnl ${R >= 0 ? 'pos' : 'neg'}"><b>${R >= 0 ? '+' : ''}${R.toLocaleString('es-ES', { maximumFractionDigits: 2, minimumFractionDigits: 2 })} R</b><small>${R >= 0 ? '+' : ''}${Math.round(R * op.usdPerR).toLocaleString('es-ES')} $</small></span></div>
         <div class="pos-bar" style="--e:${ePos}%"><i class="knob" style="left:${knob}%"></i></div>
         <div class="pos-lbl"><span>SL ${fmt(op.slNow ?? op.sl)}</span><span>TP ${fmt(op.tp)}</span></div>
         <div class="sx-row"><button class="btn buy" id="sim-be" type="button" ${op.slNow === op.entry || (SIM.S.C[SIM.t].c - op.entry) * op.dir <= 0 ? 'disabled' : ''} title="Solo con la operación en ganancia">Stop a break even</button><button class="btn sell" id="sim-close" type="button">Cerrar a mercado</button></div>
-      </div>`;
+      </div>`, prevSkel);
     } else if (SIM.trades.length && !SIM.keepGoing) {
       // ya operaste: el plan dice un trade por sesión, así que lo siguiente es evaluarlo
       const last = SIM.trades[SIM.trades.length - 1], tot = SIM.trades.reduce((q, x) => q + (x.R || 0), 0);
@@ -889,9 +909,9 @@
       return;
     } else {
       const px = fmt(SIM.S.C[SIM.t].c);
-      c.innerHTML = player + `<div class="sx-row trade">
+      setDock(c, player + `<div class="sx-row trade">
         <button class="btn buy tall" id="sim-buy" type="button"><b>Comprar</b><small>${px}</small></button>
-        <button class="btn sell tall" id="sim-sell" type="button"><b>Vender</b><small>${px}</small></button></div>`;
+        <button class="btn sell tall" id="sim-sell" type="button"><b>Vender</b><small>${px}</small></button></div>`, prevSkel);
     }
     const play = () => { stopAuto(); autoT = setInterval(() => simStep(1), 450 / (SIM.speed || 1)); };
     $('#sim-step').onclick = () => simStep(1);

@@ -857,6 +857,10 @@ h1 { font-weight: 500; }
 .lg-form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .lg-msg { margin: 0; color: #ffd2b8; }
 @media (min-width: 761px) { .dtiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.sx-player .play { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.sx-player .play.on { background: var(--ink) !important; color: var(--bg) !important; animation: play-ring 1.6s ease-out infinite; }
+@keyframes play-ring { 0% { box-shadow: 0 0 0 0 rgba(255, 109, 41, .45); } 100% { box-shadow: 0 0 0 14px rgba(255, 109, 41, 0); } }
+.sx-player .play:active { transform: scale(.92); }
 /* Pantalla de carga */
 #splash { background: radial-gradient(70% 50% at 0% 100%, rgba(255, 109, 41, .35), transparent 70%), #161316 !important; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
