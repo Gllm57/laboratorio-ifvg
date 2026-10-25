@@ -362,7 +362,7 @@
   // Cuestionario reutilizable
   function quiz(host, Q, onDone) {
     let attempts = 0;
-    const form = H(`<form class="qform">${Q.map((q, i) => `<fieldset><legend>${i + 1}. ${esc(q.q)}</legend>${q.o.map((o, j) => `<label class="opt"><input type="radio" name="q${i}" value="${j}" id="q${i}o${j}"><span>${esc(o)}</span></label>`).join('')}<p class="exp" hidden></p></fieldset>`).join('')}<div class="row"><button class="btn pri" type="submit">Comprobar</button></div><div class="result"></div></form>`);
+    const form = H(`<form class="qform">${Q.map((q, i) => `<fieldset><legend class="sr">${i + 1}. ${esc(q.q)}</legend><p class="qq" aria-hidden="true">${i + 1}. ${esc(q.q)}</p>${q.o.map((o, j) => `<label class="opt"><input type="radio" name="q${i}" value="${j}" id="q${i}o${j}"><span>${esc(o)}</span></label>`).join('')}<p class="exp" hidden></p></fieldset>`).join('')}<div class="row"><button class="btn pri" type="submit">Comprobar</button></div><div class="result"></div></form>`);
     host.appendChild(form);
     form.addEventListener('submit', (e) => {
       e.preventDefault(); attempts++;
@@ -656,6 +656,7 @@
     const pm = SIM.S.C.slice(0, E.OPEN);
     const PH = Math.max(...pm.map((b) => b.h)), PL = Math.min(...pm.map((b) => b.l));
     m.appendChild(H(`<section class="sx" id="sx">
+      <div class="sx-main">
       <header class="sx-top">
         <button class="sx-x" id="sx-exit" type="button" aria-label="Salir del simulador"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
         <div class="sx-clock"><b id="sx-clock" class="mono">9:29</b><span id="sx-win"><i></i>Pre-market</span></div>
@@ -669,6 +670,8 @@
       <div class="sx-chartwrap" id="sx-wrap"><div class="sim-chart" id="sim-chart"></div><div class="sx-over" id="sx-over"></div></div>
       <div class="sx-prog" aria-label="Progreso de la sesión"><div class="track"><i class="win"></i><i class="fill" id="sx-fill"></i><i class="knob" id="sx-knob"></i></div><div class="lbls"><span class="a">${E.hhmm(0)}</span><span class="b">${E.hhmm(E.OPEN)}</span><span class="c">${E.hhmm(E.WIN_END)}</span></div></div>
       <div class="sx-dock" id="sim-ctrl"></div>
+      <button class="sx-more" id="sx-more" type="button"><span>Contexto del mercado y checklist</span><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
       <div id="sim-result"></div>
       <div class="sx-scrim" id="sx-scrim"></div>
       <aside class="sx-side" id="sx-side" aria-label="Checklist y contexto">
@@ -687,7 +690,13 @@
     $('#s-acct').addEventListener('change', (e) => { SIM.acct = Math.max(5000, +e.target.value || 50000); simDraw(); });
     $('#s-inst').addEventListener('change', (e) => { SIM.inst = e.target.value; simDraw(); });
     $('#s-assist').addEventListener('change', (e) => { SIM.assist = e.target.checked; simDraw(); });
-    const side = (on) => { SIM.side = on; $('#sx').classList.toggle('side-open', on); };
+    // En el celular en vertical el contexto está debajo del panel: se llega deslizando o con este acceso
+    const below = () => live() && matchMedia('(max-width: 760px)').matches;
+    const side = (on) => {
+      if (below()) { if (on) $('#sx-side').scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' }); return; }
+      SIM.side = on; $('#sx').classList.toggle('side-open', on);
+    };
+    $('#sx-more').onclick = () => side(true);
     $('#sx-ring').onclick = () => side(!SIM.side);
     $('#sx-chips').onclick = () => side(true);
     $('#sx-chips').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); side(true); } };
