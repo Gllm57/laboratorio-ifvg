@@ -3,7 +3,7 @@ window.THEORY = window.THEORY || {};
 Object.assign(window.THEORY, {
   35: {
     secs: [
-      { h: 'Tres pasos y nada más', p: 'Toma de liquidez, IFVG y objetivo claro. El mentor lo dice así: “Realmente no necesitamos nada más que esto”. Todo lo demás (order blocks, SMT, CISD, cuartos) es contexto opcional.', dg: 'simple' },
+      { h: 'Tres pasos y nada más', p: 'Toma de liquidez, IFVG y objetivo claro. La idea de fondo: no hace falta nada más que esto. Todo lo demás (order blocks, SMT, CISD, cuartos) es contexto opcional.', dg: 'simple' },
       { h: 'El costo de añadir reglas', p: 'Cada indicador o confluencia extra es una casilla más que puede no cumplirse, y una excusa más para dudar. Con demasiadas reglas, o no entras nunca o eliges qué regla mirar según lo que quieres hacer.' },
       { h: 'Simple es medible', p: 'Si tu proceso tiene 3 pasos, en 50 trades sabes con precisión qué funciona. Si tiene 12, nunca sabrás cuál de ellos falló.' },
     ],
@@ -31,7 +31,7 @@ Object.assign(window.THEORY, {
   38: {
     secs: [
       { h: 'Los tres modelos', p: 'La apertura decide el modelo. Si manipula y da entrada, modelo 1. Si expande en lugar de manipular, esperas retroceso y continuación: modelo 2. Si expande sin dar continuación, esperas el retroceso en contra: modelo 3.', dg: 'models' },
-      { h: 'Modelo 1 · Manipulación (9:30–10:00)', p: 'En la apertura el precio barre la liquidez (normalmente el máximo o mínimo del pre-market), reacciona en un punto de interés y da IFVG. Es la variable preferida del mentor. Idealmente a favor del sesgo.', dg: 'm1' },
+      { h: 'Modelo 1 · Manipulación (9:30–10:00)', p: 'En la apertura el precio barre la liquidez (normalmente el máximo o mínimo del pre-market), reacciona en un punto de interés y da IFVG. Es la variante más clara y la que más se repite. Idealmente a favor del sesgo.', dg: 'm1' },
       { h: 'Modelo 2 · Continuación (10:00–10:30, hasta 11:00)', p: 'La apertura expande. Luego el precio retrocede a un FVG de 5 minutos, barre un mínimo o máximo interno y da IFVG a favor de la expansión. Te subes a la corriente.', dg: 'm2' },
       { h: 'Modelo 3 · Retroceso', p: 'La apertura expande con fuerza y no deja una entrada de continuación. Como compradores y vendedores no se equilibraron, el precio suele volver hacia los FVG sin rellenar. Esperas el barrido del extremo y un IFVG en contra de la expansión.', dg: 'm3' },
       { h: 'Una variable por sesión', p: 'Si ya se dio la variable 1 y operaste, no buscas la 2. El plan es un trade por sesión, sea cual sea el modelo.' },
@@ -43,7 +43,7 @@ Object.assign(window.THEORY, {
     secs: [
       { h: 'El patrón base', p: 'Liquidez → manipulación → desplazamiento → objetivo. Se repite cada día, en todas las temporalidades. Lo que cambia es dónde ocurre la manipulación y qué tan lejos está el objetivo.', dg: 'repeat' },
       { h: 'Entrenar el reconocimiento', p: 'La forma más rápida de aprender a ver el patrón es repetirlo cientos de veces. Las prácticas de identificación (FVG, liquidez, IFVG) y el simulador generan escenarios nuevos cada vez. Una ronda al día durante un mes cambia por completo tu velocidad.' },
-      { h: 'Ejemplos recientes', p: 'El mentor insiste en revisar ejemplos de los últimos días, no de hace años: el comportamiento del mercado cambia y tu ojo se entrena con lo actual.' },
+      { h: 'Ejemplos recientes', p: 'Revisa ejemplos de los últimos días, no de hace años: el comportamiento del mercado cambia y tu ojo se entrena con lo actual.' },
     ],
     err: ['Estudiar solo ejemplos perfectos.', 'No revisar los días en que el patrón falló.', 'Practicar una vez por semana.'],
     ej: 'Durante 20 días seguidos, marca en el gráfico real de NQ dónde estuvo el barrido, el IFVG y el objetivo, aunque no hayas operado. Compara con lo que habrías hecho.',
@@ -52,8 +52,8 @@ Object.assign(window.THEORY, {
     secs: [
       { h: 'Cómo funciona el fondeo', p: 'Pagas una evaluación. Si alcanzas un objetivo de beneficio sin superar el límite de pérdida, te dan una cuenta con su capital y compartes las ganancias. Las reglas varían por empresa: lee siempre las condiciones.', dg: 'funded' },
       { h: 'El límite de pérdida', p: 'Muchas cuentas usan un drawdown con trailing: el límite sube cuando tu saldo sube. Por eso el riesgo bajo es clave: con 0,5 % por trade necesitas muchas pérdidas seguidas para tocarlo.' },
-      { h: 'Replicar cuentas', p: 'El mentor opera varias cuentas con un replicador: una cuenta líder ejecuta y las demás copian. El esfuerzo es el mismo que con una cuenta, pero los resultados (buenos y malos) se multiplican. Solo tiene sentido cuando ya eres consistente.' },
-      { h: 'Costos', p: 'Evaluaciones, activaciones y datos son costos reales. El mentor habla del trading con fondeo como un negocio de retorno de inversión: cuenta lo que gastas en cuentas perdidas, no solo los retiros.' },
+      { h: 'Replicar cuentas', p: 'Se pueden operar varias cuentas con un replicador: una cuenta líder ejecuta y las demás copian. El esfuerzo es el mismo que con una cuenta, pero los resultados (buenos y malos) se multiplican. Solo tiene sentido cuando ya eres consistente.' },
+      { h: 'Costos', p: 'Evaluaciones, activaciones y datos son costos reales. El trading con fondeo es un negocio de retorno de inversión: cuenta lo que gastas en cuentas perdidas, no solo los retiros.' },
     ],
     err: ['Comprar evaluaciones sin consistencia previa en simulado.', 'No leer las reglas del drawdown.', 'Subir el riesgo para pasar la prueba rápido.'],
     ej: 'Cuenta de 50.000 $ con 2.500 $ de límite. A 250 $ por trade necesitas 10 pérdidas seguidas sin ganancias intermedias para tocarlo. A 1.000 $ por trade bastan 3.',
@@ -96,7 +96,7 @@ Object.assign(window.THEORY, {
   },
   45: {
     secs: [
-      { h: 'Un trade perdedor bien ejecutado', p: 'El mentor muestra también sus pérdidas. Un stop con el plan cumplido no requiere cambios: es la estadística haciendo su parte.', dg: 'loss' },
+      { h: 'Un trade perdedor bien ejecutado', p: 'Mira también las pérdidas, no solo las ganancias. Un stop con el plan cumplido no requiere cambios: es la estadística haciendo su parte.', dg: 'loss' },
       { h: 'El repaso semanal', p: 'Una vez por semana: R total, número de trades por modelo, disciplina media, errores repetidos y una mejora concreta para la semana siguiente. Se hace con calma, no justo después de una pérdida.' },
       { h: 'Separar resultado y ejecución', p: 'Una semana negativa con disciplina 95 es una buena semana de trabajo. Una positiva con disciplina 60 es una señal de alarma.' },
     ],
@@ -105,7 +105,7 @@ Object.assign(window.THEORY, {
   },
   46: {
     secs: [
-      { h: 'Tratarlo como un negocio', p: 'Cuando el trading genera ingresos, conviene ordenar costos, ingresos e impuestos. El mentor menciona una LLC en Estados Unidos; la estructura correcta depende de tu país y tu situación.', dg: 'business' },
+      { h: 'Tratarlo como un negocio', p: 'Cuando el trading genera ingresos, conviene ordenar costos, ingresos e impuestos. Un ejemplo es una LLC en Estados Unidos; la estructura correcta depende de tu país y tu situación.', dg: 'business' },
       { h: 'Qué ordenar', p: 'Cuenta bancaria separada para el negocio, registro de cada costo (evaluaciones, datos, plataformas, formación) y de cada retiro con su comprobante.' },
       { h: 'Asesoría', p: 'Antes de abrir una sociedad o declarar ingresos, consulta a un contador de tu país. Esta app no da asesoramiento legal ni fiscal.' },
     ],
@@ -125,7 +125,7 @@ Object.assign(window.THEORY, {
     secs: [
       { h: 'La motivación fluctúa', p: 'Habrá semanas planas y retrocesos. Si tu práctica depende de las ganas, se cae en la primera mala racha. Lo que se mantiene son los hábitos.', dg: 'motivation' },
       { h: 'Hábitos pequeños', p: 'Una lección, una ronda de práctica y una sesión al día, a la misma hora. Es poco, pero repetido cada día suma cientos de sesiones en pocos meses.' },
-      { h: 'Rodearte bien', p: 'El mentor insiste en aprender con gente que ya hizo el camino. Comparte tu diario, pide revisión de tus trades y compara tu proceso, no tus resultados.' },
+      { h: 'Rodearte bien', p: 'Aprende con gente que ya hizo el camino. Comparte tu diario, pide revisión de tus trades y compara tu proceso, no tus resultados.' },
     ],
     err: ['Esperar a tener ganas para practicar.', 'Compararte con resultados ajenos en redes.', 'Abandonar tras dos semanas malas.'],
     ej: 'Racha en la app: aunque solo hagas 10 minutos, completa al menos una ronda de práctica cada día.',

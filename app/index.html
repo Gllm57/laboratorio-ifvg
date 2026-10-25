@@ -702,7 +702,7 @@ h1 { font-weight: 500; }
 .gbar i, .gbar > i { background: var(--grad) !important; }
 .g-card { background: radial-gradient(130% 130% at 100% 0%, #ff8a4c 0%, #ff6d29 35%, #c4501a 100%) !important; }
 /* Barra inferior: oscura, el activo en naranja */
-.nav { background: rgba(30, 26, 28, .94) !important; border: 1px solid var(--edge); }
+.nav { background: #1e1a1c !important; border: 1px solid var(--edge); }
 .nav a[aria-current="page"] { color: var(--accent) !important; }
 .nav-ind { background: rgba(255, 109, 41, .12) !important; box-shadow: inset 0 0 0 1px rgba(255, 109, 41, .25); }
 /* Simulador */
@@ -875,6 +875,23 @@ h1 { font-weight: 500; }
   body.sx-live .sheet-grip, body.sx-live .sx-scrim { display: none !important; }
 }
 .sx-side { overflow-x: hidden; } .sx-side > * { min-width: 0; }
+/* Notas */
+.note-new textarea, .note textarea { width: 100%; min-height: 110px; resize: vertical; font: 16px/1.5 var(--f-body); padding: 14px 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.note-new textarea:focus, .note textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.note-tags, .note-filter { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.note-tags button, .note-filter button { min-height: 36px; padding: 0 13px; border-radius: 999px; border: 1px solid var(--edge); background: var(--soft); color: #e4dfdb; font: 500 13.5px var(--f-body); cursor: pointer; }
+.note-tags button.on, .note-filter button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; }
+.note-tools { display: grid; gap: 10px; }
+.note-list { display: grid; gap: 10px; }
+.note { padding: 16px; border-radius: 22px; background: var(--glow), var(--surface); border: 1px solid var(--edge); display: grid; gap: 8px; animation: rise .3s var(--ease) backwards; }
+.note-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .note-top time { margin-left: auto; }
+.note-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15.5px; line-height: 1.55; }
+.note-act { display: flex; gap: 14px; } .note-act .link { min-height: 36px; padding: 0; }
+.note-empty { text-align: center; padding: 18px 8px; }
+.notes-link { display: flex; align-items: center; justify-content: space-between; text-decoration: none; color: var(--ink); }
+.notes-link span { display: grid; gap: 2px; } .notes-link b { font-size: 17px; font-weight: 600; } .notes-link small { color: var(--ink-2); font-size: 13.5px; } .notes-link i { font-style: normal; font-size: 22px; color: var(--ink-2); }
+a.dchip { text-decoration: none; }
+.note-btn { justify-self: start; }
 /* Pantalla de carga */
 #splash { background: radial-gradient(70% 50% at 0% 100%, rgba(255, 109, 41, .35), transparent 70%), #161316 !important; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
@@ -909,7 +926,7 @@ h1 { font-weight: 500; }
       <span class="nav-ind" aria-hidden="true"></span>
       <a href="#inicio" data-v="inicio" aria-label="Hoy"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 3.5a7.5 7.5 0 1 0 0 15a7.5 7.5 0 1 0 0-15M11 7v4l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="nl">Hoy</span></a>
       <a href="#ruta" data-v="ruta" aria-label="Aprender"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M3 5c3-1 6-1 8 1 2-2 5-2 8-1v12c-3-1-6-1-8 1-2-2-5-2-8-1zM11 6v12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span class="nl">Aprender</span></a>
-      <a href="#simulador" data-v="simulador" class="fab" aria-label="Operar en el simulador"><svg width="24" height="24" viewBox="0 0 22 22" aria-hidden="true"><path d="M6 5v12M6 8h2v6H6M15 3v14M15 6h2v7h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="nl">Simulador</span></a>
+      <a href="#simulador" data-v="simulador" class="fab" aria-label="Operar en el simulador"><svg width="34" height="34" viewBox="0 0 28 28" aria-hidden="true"><g stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 11v3M7 20.5v2.5M14 5.5v3M14 18v4M21 2.5v2.5M21 12v3"/></g><rect x="4.6" y="14" width="4.8" height="6.5" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="11.6" y="8.5" width="4.8" height="9.5" rx="1.4" fill="currentColor"/><rect x="18.6" y="5" width="4.8" height="7" rx="1.4" fill="currentColor"/><path d="M3.5 25.5h21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".45"/></svg><span class="nl">Simulador</span></a>
       <a href="#practica" data-v="practica" aria-label="Practicar"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M4 11h3l2-5 4 10 2-5h3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nl">Practicar</span></a>
       <a href="#diario" data-v="diario" aria-label="Progreso"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M4 18V12M9 18V8M14 18v-4M19 18V5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg><span class="nl">Progreso</span></a>
     </nav>

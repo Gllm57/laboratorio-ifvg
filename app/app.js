@@ -8,7 +8,7 @@
 
   // ---------- Estado y guardado ----------
   const KEY = 'lab-ifvg-v1';
-  const blank = () => ({ lessons: {}, xp: 0, ex: {}, sims: [], exam: null, last: 1, act: {}, rev: {}, checkin: {}, real: [], realIdx: 0, simcfg: { sess: 'ny', mkt: 'NQ', real: false }, lastBackup: 0 });
+  const blank = () => ({ lessons: {}, xp: 0, ex: {}, sims: [], exam: null, last: 1, act: {}, rev: {}, checkin: {}, notes: [], real: [], realIdx: 0, simcfg: { sess: 'ny', mkt: 'NQ', real: false }, lastBackup: 0 });
   let S = blank();
   try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(blank(), JSON.parse(raw)); } catch (e) { /* sin almacenamiento */ }
   if (S.onb == null) S.onb = S.xp > 0; // quien ya tenía progreso no ve la bienvenida
@@ -51,9 +51,9 @@
   }
 
   // ---------- Navegación ----------
-  const VIEWS = ['inicio', 'ruta', 'estrategia', 'glosario', 'practica', 'simulador', 'diario', 'bienvenida'];
+  const VIEWS = ['inicio', 'ruta', 'estrategia', 'glosario', 'practica', 'simulador', 'diario', 'notas', 'bienvenida'];
   // Cada vista pertenece a una pestaña: Hoy, Aprender, Simulador (botón central), Practicar, Progreso
-  const TAB = { inicio: 'inicio', ruta: 'ruta', estrategia: 'ruta', glosario: 'ruta', practica: 'practica', simulador: 'simulador', diario: 'diario', bienvenida: '' };
+  const TAB = { inicio: 'inicio', ruta: 'ruta', estrategia: 'ruta', glosario: 'ruta', practica: 'practica', simulador: 'simulador', diario: 'diario', notas: 'diario', bienvenida: '' };
   let view = 'inicio', lessonDay = null;
   // Posición de scroll por pantalla: al volver de una lección a la ruta, sigues donde estabas
   const scrollMem = {};
@@ -115,7 +115,7 @@
     document.body.classList.toggle('in-sim', view === 'simulador');
     if (view !== 'simulador') document.body.classList.remove('sx-live');
     if (wasSim && view !== 'simulador') moveInd(true); // la barra estaba oculta: recolocar el indicador
-    ({ bienvenida: vWelcome, inicio: vHome, ruta: lessonDay ? vLesson : vPath, estrategia: vStrategy, glosario: vGlossary, practica: vPractice, simulador: vSim, diario: vJournal })[view](main);
+    ({ bienvenida: vWelcome, inicio: vHome, ruta: lessonDay ? vLesson : vPath, estrategia: vStrategy, glosario: vGlossary, notas: vNotes, practica: vPractice, simulador: vSim, diario: vJournal })[view](main);
     renderHeader();
   }
   const H = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
@@ -205,6 +205,7 @@
       <span class="dchip"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1.5c.6 2.4 3.5 3.6 3.5 6.6A3.5 3.5 0 0 1 3.5 8c0-1.4.7-2.3 1.4-3 .2 1 .8 1.6 1.4 1.8C6.2 4.6 6.4 3 7 1.5z" fill="#ff6d29"/></svg>Racha ${st} ${st === 1 ? 'día' : 'días'}</span>
       ${prec != null ? `<span class="dchip"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.2" fill="none" stroke="#8fd9a8" stroke-width="1.6"/><circle cx="7" cy="7" r="1.8" fill="#8fd9a8"/></svg>Precisión ${prec} %</span>` : ''}
       <span class="dchip ${ny.open ? 'live' : ''}"><i></i>${ny.text}</span>
+      <a class="dchip" href="#notas"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 2h6l2 2v8H3zM5 6h4M5 8.5h4" fill="none" stroke="#ffb48a" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/></svg>Mis notas${liveNotes().length ? ' · ' + liveNotes().length : ''}</a>
     </div>`));
     // Misión de hoy: el siguiente paso pendiente del plan
     const nx = plan.find((x) => !doneToday(x.k)), stepN = nx ? plan.indexOf(nx) + 1 : 3;
@@ -270,7 +271,7 @@
     const total = Object.values(S.lessons).filter((x) => x.passed).length, due = dueReviews().length;
     m.appendChild(H(`<header class="page-head path-head"><div class="ph-row"><h1>Aprender</h1><span class="muted small">${total} de 50 días</span></div>
       <div class="ph-bars" aria-hidden="true">${window.PHASES.map((p) => { const n = p.days[1] - p.days[0] + 1, k = daysDone(p.days[0], p.days[1]); return `<i><i style="width:${k / n * 100}%" class="${nd >= p.days[0] && nd <= p.days[1] ? 'cur' : ''}"></i></i>`; }).join('')}</div>
-      <nav class="ph-chips" aria-label="Aprender"><a class="on" href="#ruta" aria-current="page">Ruta</a><a href="#estrategia">Estrategia</a><a href="#glosario">Glosario</a>${due ? `<a href="#inicio">Repasos · ${due}</a>` : ''}</nav></header>`));
+      <nav class="ph-chips" aria-label="Aprender"><a class="on" href="#ruta" aria-current="page">Ruta</a><a href="#estrategia">Estrategia</a><a href="#glosario">Glosario</a><a href="#notas">Mis notas</a>${due ? `<a href="#inicio">Repasos · ${due}</a>` : ''}</nav></header>`));
     // Camino en zigzag: cada día es un círculo; el actual brilla y muestra su tarjeta
     const XS = [50, 72, 82, 72, 50, 28, 18, 28], ROW = 92;
     for (const p of window.PHASES) {
@@ -296,6 +297,60 @@
         </div></section>`));
     }
     if (scrollMem.ruta == null) setTimeout(() => { const c = $('.node.cur'); if (c && view === 'ruta' && !lessonDay) c.scrollIntoView({ block: 'center' }); }, 60);
+  }
+
+  // ---------- Notas ----------
+  let NOTE_DRAFT = null, noteQ = '', noteF = 'todas', noteEdit = null;
+  const NOTE_TAGS = { general: 'General', leccion: 'Lección', trade: 'Trade', idea: 'Idea' };
+  const liveNotes = () => (S.notes || []).filter((n) => !n.del);
+  function vNotes(m) {
+    S.notes = S.notes || [];
+    const d = NOTE_DRAFT || { tag: 'general' };
+    m.appendChild(H(`<header class="page-head"><nav class="crumbs"><a href="#diario">Progreso</a> / Notas</nav><h1>Mis notas</h1><p class="lead">Reglas que quieres recordar, errores que no quieres repetir e ideas para revisar. Se guardan con tu progreso.</p></header>`));
+    const comp = H(`<form class="card note-new" id="n-form"><label for="n-text" class="sr">Nueva nota</label>
+      <textarea id="n-text" rows="4" maxlength="4000" placeholder="${d.day ? `Lo que quieres recordar del día ${d.day}…` : 'Escribe una regla, un error a evitar o una idea…'}"></textarea>
+      <div class="note-tags" role="group" aria-label="Tipo de nota">${Object.entries(NOTE_TAGS).map(([k, l]) => `<button type="button" data-t="${k}" class="${d.tag === k ? 'on' : ''}" aria-pressed="${d.tag === k}">${l}</button>`).join('')}${d.day ? `<span class="pill mid">Día ${d.day}</span>` : ''}</div>
+      <div class="row"><button class="btn pri" type="submit">Guardar nota</button><span class="small muted" id="n-ok" role="status"></span></div></form>`);
+    m.appendChild(comp);
+    comp.querySelectorAll('.note-tags button').forEach((b) => b.onclick = () => { d.tag = b.dataset.t; comp.querySelectorAll('.note-tags button').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); }); });
+    comp.onsubmit = (e) => {
+      e.preventDefault(); const t = $('#n-text').value.trim(); if (!t) { $('#n-text').focus(); return; }
+      const now = Date.now(); S.notes.push({ id: now.toString(36) + Math.random().toString(36).slice(2, 6), at: now, upd: now, text: t, tag: d.tag, ...(d.day ? { day: d.day } : {}) });
+      NOTE_DRAFT = null; save(); render(); setTimeout(() => { const ok = $('#n-ok'); if (ok) ok.textContent = 'Nota guardada.'; }, 30);
+    };
+    if (NOTE_DRAFT) setTimeout(() => { const t = $('#n-text'); if (t) t.focus(); }, 80);
+    // búsqueda y filtro
+    const all = liveNotes();
+    m.appendChild(H(`<section class="note-tools"><label for="n-q" class="sr">Buscar en tus notas</label><input id="n-q" class="search" type="search" placeholder="Buscar en tus notas…" value="${esc(noteQ)}" autocomplete="off">
+      <div class="note-filter" role="group" aria-label="Filtrar">${[['todas', 'Todas'], ...Object.entries(NOTE_TAGS)].map(([k, l]) => `<button type="button" data-f="${k}" class="${noteF === k ? 'on' : ''}" aria-pressed="${noteF === k}">${l}${k === 'todas' ? ` · ${all.length}` : ''}</button>`).join('')}</div></section>`));
+    const list = H('<section class="note-list" id="n-list" aria-live="polite"></section>'); m.appendChild(list);
+    const norm = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const draw = () => {
+      const q = norm(noteQ.trim());
+      const xs = all.filter((n) => (noteF === 'todas' || n.tag === noteF) && (!q || norm(n.text).includes(q))).sort((a, b) => b.upd - a.upd);
+      list.innerHTML = xs.length ? xs.map((n) => `<article class="note" data-id="${n.id}">
+          <div class="note-top"><span class="pill ${n.tag === 'trade' ? 'ok' : n.tag === 'leccion' ? 'mid' : ''}">${NOTE_TAGS[n.tag] || 'General'}</span>${n.day ? `<a class="small" href="#dia${n.day}">Día ${n.day} ›</a>` : ''}<time class="small muted">${new Date(n.upd).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}${n.upd !== n.at ? ' · editada' : ''}</time></div>
+          ${noteEdit === n.id ? `<label for="n-e" class="sr">Editar nota</label><textarea id="n-e" rows="4" maxlength="4000">${esc(n.text)}</textarea><div class="row"><button class="btn pri" type="button" data-a="save">Guardar</button><button class="btn" type="button" data-a="cancel">Cancelar</button></div>`
+            : `<p class="note-text">${esc(n.text)}</p><div class="note-act"><button class="link small" type="button" data-a="edit">Editar</button><button class="link small" type="button" data-a="del">Borrar</button></div>`}
+        </article>`).join('')
+        : `<p class="muted note-empty">${all.length ? 'No hay notas con ese filtro.' : 'Todavía no tienes notas. Escribe la primera arriba: por ejemplo, la regla que más te cuesta cumplir.'}</p>`;
+      if (noteEdit && $('#n-e')) $('#n-e').focus();
+    };
+    list.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      const n = S.notes.find((x) => x.id === b.closest('.note').dataset.id); if (!n) return;
+      const a = b.dataset.a;
+      if (a === 'edit') { noteEdit = n.id; draw(); }
+      else if (a === 'cancel') { noteEdit = null; draw(); }
+      else if (a === 'save') { const t = $('#n-e').value.trim(); if (!t) return; n.text = t; n.upd = Date.now(); noteEdit = null; save(); draw(); }
+      else if (a === 'del' && confirm('¿Borrar esta nota?')) { n.del = true; n.text = ''; n.upd = Date.now(); save(); render(); }
+    });
+    $('#n-q').addEventListener('input', (e) => { noteQ = e.target.value; draw(); });
+    m.querySelectorAll('.note-filter button').forEach((b) => b.onclick = () => { noteF = b.dataset.f; m.querySelectorAll('.note-filter button').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); }); draw(); });
+    draw();
+    // notas escritas al terminar cada sesión del simulador
+    const sn = S.sims.map((x, i) => ({ x, i })).filter(({ x }) => x.note).reverse();
+    if (sn.length) m.appendChild(H(`<section class="card"><div class="card-head"><h2>Notas de tus sesiones</h2><span class="muted small">${sn.length}</span></div><div class="jlist">${sn.slice(0, 30).map(({ x, i }) => `<div class="jrow"><div class="jr-top"><span class="mono muted">#${i + 1} · ${new Date(x.at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span><span class="pill ${x.score >= 85 ? 'ok' : x.score >= 50 ? 'mid' : 'no'}">${x.score}</span></div><p class="jr-note">${esc(x.note)}</p></div>`).join('')}</div></section>`));
   }
 
   function vGlossary(m) {
@@ -338,6 +393,7 @@
       <section class="card"><h2>Ideas clave</h2><ul class="keys">${L.pts.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>
       ${T.err.length ? `<section class="card"><h2>Errores comunes</h2><ul class="x">${T.err.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
       ${T.ej ? `<section class="card example"><h2>Ejemplo</h2><p>${esc(T.ej)}</p></section>` : ''}
+      <button class="btn note-btn" type="button" id="l-note"><svg width="16" height="16" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 2h6l2 2v8H3zM5 6h4M5 8.5h4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/></svg>Anotar algo de este día</button>
       <p class="muted small">Video original: “${esc(L.t)} | Día ${L.d}”. <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(L.t + ' bootcamp día ' + L.d)}" target="_blank" rel="noopener">Buscarlo en YouTube</a> · <a href="${PLAYLIST}" target="_blank" rel="noopener">Lista completa</a></p>
       ${DAY_EX[L.d] ? `<section class="card practice-cta"><div><small class="muted">Pon esto en práctica</small><b>${EXS.find((x) => x.id === DAY_EX[L.d]).t}</b><p class="muted small">Una ronda de 5 preguntas sobre gráficos, corregida al momento.</p></div><button class="btn pri" type="button" id="l-practice">Practicar ahora</button></section>` : ''}
       <section class="card quiz" id="quiz"><h2>Control del día</h2>${st.passed ? '<p class="pill ok">Aprobado</p>' : ''}</section>
@@ -345,6 +401,7 @@
     </article>`);
     m.appendChild(el);
     if ($('#dg')) lazyDG($('#dg'), L.dg);
+    $('#l-note').onclick = () => { NOTE_DRAFT = { tag: 'leccion', day: L.d }; location.hash = 'notas'; };
     if ($('#l-practice')) $('#l-practice').onclick = () => { EX = { active: true, id: DAY_EX[L.d], k: 0, ok: 0, round: null }; location.hash = 'practica'; };
     el.querySelectorAll('[data-dg]').forEach((d) => lazyDG(d, d.dataset.dg));
     quiz($('#quiz'), L.q, (ok, total, firstTry) => {
@@ -391,7 +448,7 @@
     const sess = H('<section class="panel"><h2>Horario operativo</h2><div id="dg-sess"></div></section>'); m.appendChild(sess);
     DG.sessions($('#dg-sess'));
     const models = [
-      [1, 'Manipulación', '9:30–10:00', 'El mercado abre, manipula (barre liquidez), reacciona en un punto de interés y da un IFVG. Es la variable preferida del mentor.'],
+      [1, 'Manipulación', '9:30–10:00', 'El mercado abre, manipula (barre liquidez), reacciona en un punto de interés y da un IFVG. Es la variante más clara y la que más se repite.'],
       [2, 'Continuación', '10:00–10:30 (hasta 11:00)', 'La apertura no manipuló: expandió. Esperas un retroceso a un FVG, una toma de liquidez interna y un IFVG a favor de la expansión.'],
       [3, 'Retroceso', 'Tras una expansión sin entrada', 'El precio expandió sin dar continuación. Como no equilibró compradores y vendedores, esperas la toma del extremo y un IFVG hacia los FVG sin rellenar.'],
     ];
@@ -1170,6 +1227,7 @@
     const { cur, next } = currentLevel();
     m.appendChild(H(`<header class="page-head"><h1>Progreso</h1><p class="lead">Tu nivel, en qué fallas, tus estadísticas y el diario de sesiones.</p></header>`));
     m.appendChild(H(`<section class="card acct" id="acct">${accountHTML()}</section>`)); bindAccount();
+    m.appendChild(H(`<a class="card notes-link" href="#notas"><span><b>Mis notas</b><small>${liveNotes().length ? `${liveNotes().length} ${liveNotes().length === 1 ? 'nota guardada' : 'notas guardadas'}` : 'Guarda reglas, errores e ideas'}</small></span><i aria-hidden="true">›</i></a>`));
     m.appendChild(H(`<section class="card"><div class="card-head"><h2>Nivel ${cur.n} · ${cur.name}</h2><span class="muted small">${S.xp.toLocaleString('es-ES')} XP · racha ${streak()}</span></div>
       <div class="ladder">${levels().map((l) => `<span class="${l.n <= cur.n ? 'on' : ''}">${l.n}</span>`).join('')}</div>
       ${next ? `<p class="small muted">Para ${next.name}:</p><ul class="reqs">${next.reqs.map(([t, v, g, u = '']) => `<li class="${v >= g ? 'ok' : ''}"><span>${t}</span><b>${v}${u} / ${g}${u}</b></li>`).join('')}</ul>` : '<p>Nivel máximo. Mantén una sesión diaria para conservar la consistencia.</p>'}</section>`));
@@ -1265,6 +1323,8 @@
     o.exam = Math.max(a.exam ?? -1, b.exam ?? -1); if (o.exam < 0) o.exam = null;
     o.last = Math.max(a.last || 1, b.last || 1); o.onb = !!(a.onb || b.onb);
     o.lastBackup = Math.max(a.lastBackup || 0, b.lastBackup || 0);
+    const nm = new Map(); for (const n of [...(b.notes || []), ...(a.notes || [])]) { const c = nm.get(n.id); if (!c || (n.upd || 0) > (c.upd || 0) || ((n.upd || 0) === (c.upd || 0) && n.del && !c.del)) nm.set(n.id, n); }
+    o.notes = [...nm.values()].sort((x, y) => x.at - y.at);
     o.updatedAt = Math.max(a.updatedAt || 0, b.updatedAt || 0);
     o.real = a.real || []; o.realIdx = a.realIdx || 0;
     return o;

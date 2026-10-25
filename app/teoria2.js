@@ -14,7 +14,7 @@ Object.assign(window.THEORY, {
     secs: [
       { h: 'La fórmula', p: 'Contratos = (cuenta × riesgo %) ÷ (puntos de stop × valor del punto). Siempre se redondea hacia abajo para no superar el riesgo previsto.', dg: 'calc' },
       { h: 'Tabla rápida', p: 'Con 250 $ de riesgo (50.000 $ al 0,5 %), así cambian los contratos según la distancia del stop. Cuanto más lejos el stop, menos contratos; el riesgo en dólares no cambia.', dg: 'risktable' },
-      { h: 'Tipos de entrada', p: 'A mercado: entras al cierre de la vela que confirma el IFVG. Es la más simple y la que usa el simulador. Límite: dejas una orden en el retesteo del IFVG para mejorar el precio, con el riesgo de que no se llene. El mentor a veces agrega un contrato en el retesteo, sin superar el riesgo total.' },
+      { h: 'Tipos de entrada', p: 'A mercado: entras al cierre de la vela que confirma el IFVG. Es la más simple y la que usa el simulador. Límite: dejas una orden en el retesteo del IFVG para mejorar el precio, con el riesgo de que no se llene. Una opción es agregar un contrato en el retesteo, sin superar el riesgo total.' },
     ],
     err: ['Redondear hacia arriba.', 'Mantener los contratos fijos aunque el stop cambie de tamaño.', 'Sumar contratos sin recalcular el riesgo total.'],
     ej: '100.000 $ al 0,6 % = 600 $. Stop de 18 puntos en NQ: 18 × 20 $ = 360 $ por contrato → 1 contrato (360 $). Con MNQ: 18 × 2 $ = 36 $ → 16 contratos (576 $).',
@@ -50,7 +50,7 @@ Object.assign(window.THEORY, {
     secs: [
       { h: 'La racha engaña', p: 'Después de varios ganadores el cerebro concluye que “ya lo entiendes” y sube el riesgo o relaja las reglas. Pero cada operación tiene la misma probabilidad que antes: la racha no la cambia.', dg: 'overconfidence' },
       { h: 'Señales de alerta', p: 'Quieres arriesgar más “porque estás en racha”, entras sin completar el checklist, tomas un segundo trade o empiezas a operar fuera de la ventana. Si notas una, para y revisa el diario.' },
-      { h: 'Cómo se escala bien', p: 'El mentor no arriesga más por trade: escala con más cuentas de fondeo replicadas. El riesgo por operación es el mismo con 1 cuenta que con 40. Escalar es una decisión de negocio que se toma con datos, no con euforia.' },
+      { h: 'Cómo se escala bien', p: 'No se arriesga más por trade: se escala con más cuentas de fondeo replicadas. El riesgo por operación es el mismo con 1 cuenta que con 40. Escalar es una decisión de negocio que se toma con datos, no con euforia.' },
     ],
     err: ['Duplicar contratos tras una buena semana.', 'Dejar de hacer el diario cuando todo va bien.', 'Tomar setups “B” porque estás confiado.'],
     ej: 'Llevas 6 de 7 ganadores. Al día siguiente el setup tiene R:R 1:0,9. Antes lo hubieras descartado; hoy te tienta. Lo descartas igual: esa es la diferencia entre racha y sistema.',
@@ -58,7 +58,7 @@ Object.assign(window.THEORY, {
   24: {
     secs: [
       { h: 'El calendario económico', p: 'Cada día revisa las publicaciones de alto impacto: inflación (CPI), empleo (NFP), decisiones de tipos (FOMC) y discursos de la Fed. Muchas salen a las 8:30 hora de Nueva York, antes de la apertura; el FOMC sale a las 14:00.', dg: 'news' },
-      { h: 'Qué hacen al mercado', p: 'Generan picos de volatilidad que barren liquidez de ambos lados en segundos. Pueden saltar tu stop con deslizamiento (te ejecutan peor de lo previsto). El mentor habla de datos “high” y “low” según el impacto esperado.' },
+      { h: 'Qué hacen al mercado', p: 'Generan picos de volatilidad que barren liquidez de ambos lados en segundos. Pueden saltar tu stop con deslizamiento (te ejecutan peor de lo previsto). Los datos se clasifican en “high” y “low” según el impacto esperado.' },
       { h: 'Reglas prácticas', p: 'No tengas una posición abierta en el momento de un dato de alto impacto. Si el dato sale a las 8:30, la apertura de las 9:30 suele ser más ordenada, pero con más rango. En días de FOMC la mañana suele ser lenta; muchos traders prefieren no operar.' },
     ],
     err: ['No mirar el calendario.', 'Entrar segundos antes de un dato.', 'Pensar que el stop siempre se ejecuta en el precio exacto durante una noticia.'],
@@ -150,7 +150,7 @@ Object.assign(window.THEORY, {
     secs: [
       { h: 'Qué significa CISD', p: 'Change in State of Delivery: cambio en la forma en que el precio se entrega. Se marca la apertura de la serie de velas que hizo la manipulación; cuando una vela cierra más allá de esa apertura, el precio cambió de dirección.', dg: 'cisd' },
       { h: 'Relación con el IFVG', p: 'Suelen coincidir: la vela que invalida el FVG de la manipulación suele cerrar también por encima de la apertura de las velas bajistas. Si ves las dos cosas a la vez, la confirmación es más fuerte.' },
-      { h: 'Cuándo ayuda', p: 'Cuando la manipulación no dejó un FVG claro. El CISD te da una referencia alternativa del cambio de intención, aunque la estrategia del mentor se centra en el IFVG.' },
+      { h: 'Cuándo ayuda', p: 'Cuando la manipulación no dejó un FVG claro. El CISD te da una referencia alternativa del cambio de intención, aunque esta estrategia se centra en el IFVG.' },
     ],
     err: ['Marcar la apertura de una vela cualquiera.', 'Usar el CISD sin toma de liquidez.', 'Complicar el análisis añadiendo CISD a todo.'],
     ej: 'Cuatro velas bajistas llevaron el precio de 20.080 a 20.040 barriendo un mínimo. La primera abrió en 20.080. Una vela cierra en 20.083: CISD alcista, y además invalidó el FVG.',
